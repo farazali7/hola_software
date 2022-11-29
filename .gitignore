@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom paths
+data/
+*/results/models/
+**.DS_Store
+.idea/
