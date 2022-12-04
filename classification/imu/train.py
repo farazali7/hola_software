@@ -60,9 +60,9 @@ def homogenize_window(window_data):
 
 
 # Load all subjects' data
-def get_subject_emg_data(data_path, subject_num):
+def get_subject_imu_data(data_path, subject_num):
     '''
-    Load and retrieve NumPy arrays containing pertinent EMG classification data + labels for given subject.
+    Load and retrieve NumPy arrays containing pertinent IMU classification data + labels for given subject.
     :param data_path: String, path to main data directory
     :param subject_num: String, subject number specified as 's#' for subject #
     :return Tuple of two NumPy arrays as (emg data, grasp labels)
@@ -76,16 +76,44 @@ def get_subject_emg_data(data_path, subject_num):
     rel_label_idxs = np.in1d(grasp_labels, [5, 17])
     grasp_labels = grasp_labels[rel_label_idxs]
 
-    # EMG data
-    emg_data = data['emg'][rel_label_idxs, :8]
+    # # IMU proxy data
+    accelerometer_data = data['acc'][rel_label_idxs, :]
+    glove_angle_data = data['glove'][rel_label_idxs, 20:]
 
-    emg_windows = window_data(emg_data)
+    accelerometer_windows = window_data(accelerometer_data)
+    glove_angle_windows = window_data(glove_angle_data)
     grasp_labels_windows = window_data(grasp_labels)
 
     # Assign grasp label windows to mode label
     homog_label_windows = homogenize_window(grasp_labels_windows)
 
     # Compute features
+    # RMS
+    accelerometer_rms = np.sqrt(np.mean(accelerometer_windows**2, 2))
+    glove_angle_rms = np.sqrt(np.mean(glove_angle_windows**2, 2))
+
+    # Mean Absolute Value (MAV)
+    accelerometer_mav = np.mean(np.abs(accelerometer_windows), 2)
+    glove_angle_mav = np.mean(np.abs(glove_angle_windows), 2)
+
+    # Variance
+    accelerometer_var = np.var(accelerometer_windows, 2)
+    glove_angle_var = np.var(glove_angle_windows, 2)
+
+    # marginal Discrete Wavelet Transform (mDWT) ?
+    accelerometer_mdwt = pywt.wavedec(accelerometer_windows, 'db7', level=3, axis=2)
+    accelerometer_mdwt_means = [np.nanmean(mdwt, 2) for mdwt in accelerometer_mdwt]
+    accelerometer_mdwt_mean = np.concatenate(accelerometer_mdwt_means)
+
+    glove_angle_mdwt = pywt.wavedec(glove_angle_windows, 'db7', level=3, axis=2)
+    glove_angle_mdwt_means = [np.nanmean(mdwt, 2) for mdwt in glove_angle_mdwt]
+    glove_angle_mdwt_mean = np.concatenate(glove_angle_mdwt_means)
+
+
+    # EMG data
+    emg_data = data['emg'][rel_label_idxs, :8]
+
+    emg_windows = window_data(emg_data)
     # RMS
     emg_rms = np.sqrt(np.mean(emg_windows**2, 2))
 
@@ -95,23 +123,20 @@ def get_subject_emg_data(data_path, subject_num):
     # Variance
     emg_var = np.var(emg_windows, 2)
 
-    # marginal Discrete Wavelet Transform (mDWT) ?
-    emg_mdwt = pywt.wavedec(emg_windows, 'db7', level=3, axis=2)
-    emg_mdwt_means = [np.nanmean(mdwt, 2) for mdwt in emg_mdwt]
-    emg_mdwt_mean = np.concatenate(emg_mdwt_means)
+    features = [accelerometer_rms, glove_angle_rms, accelerometer_mav, glove_angle_mav, accelerometer_var,
+                glove_angle_var, emg_rms, emg_mav, emg_var]
 
     # Standardize features
+    standardized_features = []
     ss = StandardScaler()
-    emg_rms_st = ss.fit_transform(emg_rms)
-    emg_mav_st = ss.fit_transform(emg_mav)
-    emg_var_st = ss.fit_transform(emg_var)
-    emg_mdwt_mean_st = ss.fit_transform(emg_mdwt_mean)
+    for feature in features:
+        standardized_features.append(ss.fit_transform(feature))
 
     # Create full feature dataset
-    full_emg_features = np.concatenate([emg_rms_st, emg_mav_st, emg_var_st, emg_mdwt_mean_st])
-    full_labels = np.repeat(homog_label_windows, full_emg_features.shape[0]//homog_label_windows.shape[0])
+    full_imu_features = np.concatenate(standardized_features)
+    full_labels = np.repeat(homog_label_windows, full_imu_features.shape[0]//homog_label_windows.shape[0])
 
-    return full_emg_features, full_labels
+    return full_imu_features, full_labels
 
 
 def get_all_subject_data(data_path, subject_nums):
@@ -121,14 +146,14 @@ def get_all_subject_data(data_path, subject_nums):
     :param subject_nums: List of String, all requested subject numbers as 's#' for subject #
     :return: Tuple of lists as (emg data, grasp labels)
     '''
-    all_subjects_emg = []
+    all_subjects_data = []
     all_subjects_labels = []
     for subject_num in subject_nums:
-        subject_emg, subject_labels = get_subject_emg_data(data_path, subject_num)
-        all_subjects_emg.append(subject_emg)
+        subject_data, subject_labels = get_subject_imu_data(data_path, subject_num)
+        all_subjects_data.append(subject_data)
         all_subjects_labels.append(subject_labels)
 
-    return all_subjects_emg, all_subjects_labels
+    return all_subjects_data, all_subjects_labels
 
 
 def LOSO_CV(data_path, subject_nums, model, save_dir):
@@ -140,23 +165,23 @@ def LOSO_CV(data_path, subject_nums, model, save_dir):
     :param save_dir: String, path to directory where results should be saved
     '''
 
-    all_subject_emg, all_subject_labels = get_all_subject_data(data_path, subject_nums)
+    all_subject_data, all_subject_labels = get_all_subject_data(data_path, subject_nums)
 
     main_save_dir = os.path.join(save_dir, datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
     # Create results directory if not already made
     if not os.path.exists(main_save_dir):
         os.makedirs(main_save_dir)
 
-    for idx in range(len(all_subject_emg)):
+    for idx in range(len(all_subject_data)):
         print(f'\n----- PERFORMING LOSO-CV FOR SUBJECT: {idx+1} -----\n')
         # Create training set
-        train_data = all_subject_emg[:idx] + all_subject_emg[idx+1:]
+        train_data = all_subject_data[:idx] + all_subject_data[idx+1:]
         train_data = np.concatenate(train_data, 0)
         train_labels = all_subject_labels[:idx] + all_subject_labels[idx + 1:]
         train_labels = np.concatenate(train_labels, 0)
 
         # Create validation set
-        val_data = all_subject_emg[idx]
+        val_data = all_subject_data[idx]
         val_labels = all_subject_labels[idx]
 
         # Fit to model
@@ -176,15 +201,15 @@ def LOSO_CV(data_path, subject_nums, model, save_dir):
 if __name__ == "__main__":
     data_path = 'data/'
     subject_nums = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10']
-    save_dir = 'results/'
+    save_dir = 'results/models/'
     knn_clf = KNeighborsClassifier(n_jobs=-1)
     svm_clf = SVC(verbose=1)
     dt_clf = DecisionTreeClassifier()
     mlp_clf = MLPClassifier(hidden_layer_sizes=(50, 10))
-    models = {'KNN': knn_clf,
-              'SVM': svm_clf,
-              'DecisionTree': dt_clf,
-              'MLP': mlp_clf}
+    models = {'KNN_IMUEMG': knn_clf,
+              'SVM_IMUEMG': svm_clf,
+              'DecisionTree_IMUEMG': dt_clf,
+              'MLP_IMUEMG': mlp_clf}
 
     for model_name in models.keys():
         print(f'VALIDATING MODEL: {model_name}')
