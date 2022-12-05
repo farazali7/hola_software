@@ -26,7 +26,6 @@ def get_f1score(labels, preds):
 
 def get_cv_metrics(results_path):
     accuracies = []
-    precisions = []
     sensitivities = []
     recalls = []
     f1_scores = []
@@ -36,7 +35,6 @@ def get_cv_metrics(results_path):
         labels = read_csv(os.path.join(results_path, f'cv{cv_num}_val_labels.csv'), header=None, dtype=int)
         accuracies.append(get_accuracy(labels, preds))
         sensitivities.append(get_sensitivity(labels, preds))
-        precisions.append(get_precision(labels, preds))
         recalls.append(get_recall(labels, preds))
         f1_scores.append(get_f1score(labels, preds))
 
