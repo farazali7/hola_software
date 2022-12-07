@@ -78,7 +78,7 @@ def get_subject_emg_data(data_path, subject_num):
 
     # EMG data
     emg_data = data['emg'][rel_label_idxs, :8]
-
+    print(f'For {subject_num}: TVG labels: {np.bincount(np.squeeze(grasp_labels))[5]}, LP labels: {np.bincount(np.squeeze(grasp_labels))[17]}')
     emg_windows = window_data(emg_data)
     grasp_labels_windows = window_data(grasp_labels)
 
