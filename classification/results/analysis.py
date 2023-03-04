@@ -29,7 +29,7 @@ def get_cv_metrics(results_path):
 
 
 if __name__ == "__main__":
-    results_path = 'MLP_2023-01-15 18:55:15.547245/20230115-185515'
+    results_path = 'models/MLP_20230117-205552'
     get_cv_metrics(results_path)
 
     print('Done')

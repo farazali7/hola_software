@@ -9,7 +9,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
-from classification.utils.data_loader import get_all_subject_data, save_formatted_data
+from classification.utils.data_processing import get_all_subject_data, save_formatted_data
 from classification.config import cfg
 
 
@@ -57,7 +57,7 @@ def create_cv_folds(healthy_ids, affected_ids, num_folds):
 def cross_val(data, labels, model, num_folds, healthy_ids, affected_ids, save_dir):
     '''
     Perform Cross-Validation for given dataset and subjects.
-    :param data: NumPy array containing data of subjects.
+    :param data: NumPy array containing data_processing of subjects.
     :param labels: NumPy array containing ground-truth labels.
     :param model: Classification model to train and validate (ex. kNN, SVM, DT, etc.)
     :param num_folds: Int, represents number of folds
@@ -65,11 +65,6 @@ def cross_val(data, labels, model, num_folds, healthy_ids, affected_ids, save_di
     :param affected_ids: List of String, ids of affected subjects
     :param save_dir: String, path to directory where results should be saved
     '''
-
-    main_save_dir = os.path.join(save_dir, datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-    # Create results directory if not already made
-    if not os.path.exists(main_save_dir):
-        os.makedirs(main_save_dir)
 
     folds = create_cv_folds(healthy_ids, affected_ids, num_folds)
 
@@ -94,9 +89,9 @@ def cross_val(data, labels, model, num_folds, healthy_ids, affected_ids, save_di
         preds = model.predict(val_data)
 
         # Save model, preds, and val labels
-        np.savetxt(os.path.join(main_save_dir, f'cv{idx+1}_preds.csv'), preds, delimiter=',')
-        np.savetxt(os.path.join(main_save_dir, f'cv{idx+1}_val_labels.csv'), val_labels, delimiter=',')
-        pickle.dump(model, open(os.path.join(main_save_dir, f'cv{idx+1}_model.pkl'), 'wb'))
+        np.savetxt(os.path.join(save_dir, f'cv{idx+1}_preds.csv'), preds, delimiter=',')
+        np.savetxt(os.path.join(save_dir, f'cv{idx+1}_val_labels.csv'), val_labels, delimiter=',')
+        pickle.dump(model, open(os.path.join(save_dir, f'cv{idx+1}_model.pkl'), 'wb'))
 
         print('Done.')
 
@@ -104,7 +99,7 @@ def cross_val(data, labels, model, num_folds, healthy_ids, affected_ids, save_di
 if __name__ == "__main__":
     data_path = cfg['DATA_PATH']
     healthy_subjects = cfg['HEALTHY_SUBJECTS']
-    healthy_subjects = []
+    # healthy_subjects = []
     affected_subjects = cfg['AFFECTED_SUBJECTS']
     subject_nums = healthy_subjects + affected_subjects
     save_dir = cfg['SAVE_MODEL_PATH']
@@ -113,6 +108,8 @@ if __name__ == "__main__":
     labels_needed = cfg['GRASP_LABELS']
     emg_locs = cfg['EMG_ELECTRODE_LOCS']
     num_folds = cfg['CV_FOLDS']
+    window_size = cfg['WINDOW_SIZE']
+    window_overlap_size = cfg['WINDOW_OVERLAP_SIZE']
 
     knn_clf = KNeighborsClassifier(n_jobs=-1)
     svm_clf = SVC(verbose=1)
@@ -122,14 +119,16 @@ if __name__ == "__main__":
     #           'SVM': svm_clf,
     #           'DecisionTree': dt_clf,
     #           'MLP': mlp_clf}
-    models = {'MLP': mlp_clf}
+    models = {'DecisionTree': dt_clf}
 
     dataset_params = {'data_path': data_path,
                       'subject_nums': subject_nums,
                       'data_col': data_col,
                       'label_col': label_col,
                       'labels_needed': labels_needed,
-                      'emg_locs': emg_locs}
+                      'emg_locs': emg_locs,
+                      'window_size': window_size,
+                      'window_overlap_size': window_overlap_size}
 
     # all_subject_emg, all_subject_labels = get_all_subject_data(**dataset_params)
     with open(os.path.join(data_path, 'grasp_2_5_data.pkl'), 'rb') as handle:
@@ -140,9 +139,7 @@ if __name__ == "__main__":
     for model_name in models.keys():
         print(f'VALIDATING MODEL: {model_name}')
         model = models[model_name]
-        save_dir_model = os.path.join(save_dir, model_name + '_' + str(datetime.datetime.now()))
-        if not os.path.exists(save_dir_model):
-            os.makedirs(save_dir_model)
+        save_dir_model = os.path.join(save_dir, model_name + '_' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
         cross_val(all_subject_emg, all_subject_labels, model, num_folds, healthy_subjects, affected_subjects,
                   save_dir_model)
 
