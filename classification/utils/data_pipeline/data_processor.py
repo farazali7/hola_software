@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 from classification.utils.preprocessing import window_data, homogenize_window, butter_highpass_filter, notch_filter, \
     resample
-from classification.utils.feature_extraction.features import rms, mav, var, dwt
+from classification.utils.feature_extraction.features import rms, mav, var, dwt, hjorth_mobility, hjorth_complexity
 from classification.utils.data_pipeline import save_data, load_data
 from classification.config import cfg
 
@@ -85,15 +85,10 @@ def extract_features(emg_data, grasp_labels, window_size, window_overlap_size,
     emg_var = var(emg_windows, axis=axis)
 
     # Hjorth Mobility
-    emg_first_deriv = np.gradient(emg_windows, 1, axis=0)
-    emg_var_grad = var(emg_first_deriv)
-    emg_hjorth_mobility_y = np.sqrt(emg_var_grad / emg_var)
+    emg_hjorth_mobility_y = hjorth_mobility(emg_windows)
 
     # Hjorth Complexity
-    emg_second_deriv = np.gradient(emg_first_deriv, 1, axis=0)
-    emg_var_grad2 = var(emg_second_deriv)
-    emg_hjorth_mobility_yd = np.sqrt(emg_var_grad2 / emg_var_grad)
-    emg_hjorth_complexity = emg_hjorth_mobility_yd / emg_hjorth_mobility_y
+    emg_hjorth_complexity = hjorth_complexity(emg_windows, precomputed_mobility=emg_hjorth_mobility_y)
 
     # marginal Discrete Wavelet Transform (mDWT)
     emg_mdwt = dwt(emg_windows, family='db7', level=2, axis=axis)
