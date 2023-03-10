@@ -85,17 +85,17 @@ def extract_features(emg_data, grasp_labels, window_size, window_overlap_size,
     emg_var = var(emg_windows, axis=axis)
 
     # Hjorth Mobility
-    emg_hjorth_mobility_y = hjorth_mobility(emg_windows)
+    emg_hjorth_mobility = hjorth_mobility(emg_windows)
 
     # Hjorth Complexity
-    emg_hjorth_complexity = hjorth_complexity(emg_windows, precomputed_mobility=emg_hjorth_mobility_y)
+    emg_hjorth_complexity = hjorth_complexity(emg_windows, precomputed_mobility=emg_hjorth_mobility)
 
     # marginal Discrete Wavelet Transform (mDWT)
     emg_mdwt = dwt(emg_windows, family='db7', level=2, axis=axis)
     emg_mdwt_means = [np.nanmean(mdwt, axis) for mdwt in emg_mdwt]
     # emg_mdwt_mean = np.concatenate(emg_mdwt_means, axis=1)
 
-    raw_features = [emg_rms, emg_mav, emg_var, emg_hjorth_mobility_y, emg_hjorth_complexity] + emg_mdwt_means
+    raw_features = [emg_rms, emg_mav, emg_var, emg_hjorth_mobility, emg_hjorth_complexity] + emg_mdwt_means
     # Standardize features
     ss = StandardScaler() if standardize else MaxAbsScaler()
     scaled_features = [ss.fit_transform(feature) for feature in raw_features]
