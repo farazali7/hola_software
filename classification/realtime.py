@@ -27,7 +27,7 @@ if __name__ == "__main__":
     flex_thres = 1.0
 
     while True:
-        sample, timestamp = inlet.pull_sample()  # get EMG data_processing sample and its timestamp
+        sample, timestamp = inlet.pull_sample()  # get EMG data_pipeline sample and its timestamp
 
         if any(x > 0 for x in sample):
             print(sample)

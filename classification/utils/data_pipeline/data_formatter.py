@@ -1,47 +1,29 @@
 import os
-import pickle
-import numpy as np
-from scipy.io import loadmat
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from classification.utils.signal_processing import window_data, homogenize_window
-from classification.utils.feature_extraction.features import rms, mav, var, dwt
-from classification.config import cfg
-import wfdb
-import pandas as pd
-
-from tqdm import tqdm
-from multiprocessing import Pool
 from functools import partial
+from multiprocessing import Pool
+
+import numpy as np
+import wfdb
+from scipy.io import loadmat
+from tqdm import tqdm
+
+from classification.config import cfg
+from classification.utils.data_pipeline import save_data
 
 
-def save_data(emg_data, grasp_labels, save_path):
+def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, electrode_ids, save_dir=None):
     '''
-    Helper function for saving formatted data to pickle file for easier future loading.
-    :param data_path: String, path to main data_processing directory
-    :param subject_num: String, subject number specified by database file naming for specific subject
-    :param data_col: String, column name for data_processing
-    :param label_col: String, column name for labels
-    :param save_path: String, path to save new formatted data_processing file to
-    :return:
-    '''
-    combined_data = np.concatenate([emg_data, grasp_labels], axis=1)
-    with open(save_path, 'wb') as handle:
-        pickle.dump(combined_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-def format_ninapro_db10_data(subject_num, data_path, data_col, label_col, electrode_ids, save_dir=None):
-    '''
-    Load and retrieve NumPy arrays containing pertinent EMG classification data_processing + labels for given subject from the raw
+    Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
     dataset.
-    :param data_path: String, path to main data_processing directory
-    :param subject_num: String, subject number specified by database file naming for specific subject
-    :param data_col: String, column name for data_processing
+    :param data_path: String, path to main dataset directory
+    :param subject_id: String, subject number specified by dataset file naming for specific subject
+    :param data_col: String, column name for data_pipeline
     :param label_col: String, column name for labels,
     :param electrode_ids: Array of ints representing IDs for electrode channels
     :param save_dir: String, path to directory to save the data in
-    :return Tuple of two NumPy arrays as (emg data_processing, grasp labels)
+    :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
     '''
-    data = loadmat(os.path.join(data_path, subject_num.upper() + '_ex1.mat'))
+    data = loadmat(os.path.join(data_path, subject_id.upper() + '_ex1.mat'))
 
     # Get movement done in static condition
     dynamic_state = data['redynamic']
@@ -55,23 +37,23 @@ def format_ninapro_db10_data(subject_num, data_path, data_col, label_col, electr
     grasp_labels = data[label_col][filter_idxs]
 
     if save_dir:
-        save_path = os.path.join(save_dir, subject_num + '.pkl')
+        save_path = os.path.join(save_dir, subject_id + '.pkl')
         save_data(emg_data, grasp_labels, save_path)
 
     return emg_data, grasp_labels
 
 
-def format_grabmyo_data(subject_num, all_records, electrode_ids, save_dir=None):
+def format_grabmyo_data(subject_id, all_records, electrode_ids, save_dir=None):
     '''
-    Load and retrieve NumPy arrays containing pertinent EMG classification data_processing + labels for given subject from the raw
+    Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
     dataset.
-    :param subject_num: Int, subject number specified by database file naming for specific subject
+    :param subject_id: Int, subject number specified by database file naming for specific subject
     :param all_records: Dictionary specifying PhysioNet records for subjects (not unique here for multiprocessing)
     :param electrode_ids: Array of ints representing IDs for electrode channels
     :param save_dir: String, path to directory to save the data in
-    :return Tuple of two NumPy arrays as (emg data_processing, grasp labels)
+    :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
     '''
-    subject_records = all_records[subject_num]
+    subject_records = all_records[subject_id]
     data = []
     for record in subject_records:
         folder, record_file = record.rsplit('/', 1)
@@ -88,12 +70,12 @@ def format_grabmyo_data(subject_num, all_records, electrode_ids, save_dir=None):
         differential = channels[:, 0] - channels[:, 1]  #
         bipolar_data.append(differential)
     bipolar_data = np.transpose(np.array(bipolar_data))
-    grasp_labels = np.full_like(bipolar_data, -1)
+    grasp_labels = np.full(bipolar_data.shape[0], -1)[..., np.newaxis]
 
-    subject_num += 115  # Offset from subjects in NinaProDB10
+    subject_id += 115  # Offset from subjects in NinaProDB10
 
     if save_dir:
-        save_path = os.path.join(save_dir, 'S' + str(subject_num) + '.pkl')
+        save_path = os.path.join(save_dir, 'S' + str(subject_id) + '.pkl')
         save_data(bipolar_data, grasp_labels, save_path)
 
     return bipolar_data, grasp_labels
@@ -118,10 +100,10 @@ def organize_pn_records(record_list):
     """
     recs_by_subject = {}
     for record in record_list:
-        subject_num = int(record.split('/')[1].split('participant')[-1])
-        if subject_num not in recs_by_subject.keys():
-            recs_by_subject[subject_num] = []
-        recs_by_subject[subject_num].append(record)
+        subject_id = int(record.split('/')[1].split('participant')[-1])
+        if subject_id not in recs_by_subject.keys():
+            recs_by_subject[subject_id] = []
+        recs_by_subject[subject_id].append(record)
 
     return recs_by_subject
 
@@ -134,11 +116,11 @@ if __name__ == '__main__':
     raw_data_path = np_cfg['RAW_DATA_PATH']
     healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
     affected_subjects = np_cfg['AFFECTED_SUBJECTS']
-    subject_nums = healthy_subjects + affected_subjects
+    subject_ids = healthy_subjects + affected_subjects
     data_col = np_cfg['DATA_COL_NAME']
     label_col = np_cfg['LABEL_COL_NAME']
     electrode_ids = np_cfg['ELECTRODE_IDS']
-    save_dir = os.path.join(base_save_dir, 'ninapro_db10')
+    save_dir = np_cfg['FORMATTED_DATA_PATH']
 
     format_params = {'data_path': raw_data_path,
                      'data_col': data_col,
@@ -146,9 +128,9 @@ if __name__ == '__main__':
                      'electrode_ids': electrode_ids,
                      'save_dir': save_dir}
 
-    with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_nums),
-                        total=len(subject_nums)))
+    # with Pool() as pool:
+    #     res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
+    #                     total=len(subject_ids)))
 
     print('Done.')
 
@@ -156,7 +138,7 @@ if __name__ == '__main__':
     gm_cfg = cfg['DATASETS']['GRABMYO']
     electrode_ids = gm_cfg['ELECTRODE_IDS']
     healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
-    subject_nums = healthy_subjects
+    subject_ids = healthy_subjects
     save_dir = os.path.join(base_save_dir, 'grabmyo_openhand')
 
     records = wfdb.get_record_list('grabmyo')

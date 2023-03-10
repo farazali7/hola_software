@@ -6,6 +6,7 @@ import numpy as np
 import os
 
 from classification.config import cfg
+from classification.utils.data_pipeline import load_data
 
 
 def plot_signal(signal_data, time_vec=None, x_label='', y_label='', title=''):
@@ -62,18 +63,6 @@ def plot_batch_signal(signal_data, time_vec=None, x_label='', y_label='', title_
     fig.suptitle(title_base)
     plt.subplots_adjust(top=0.87, hspace=0.4)
     plt.show()
-
-
-def load_data(data_path):
-    """
-    Load emg and labels from pickle file.
-    :param data_path: String for path to .pkl data file
-    :return: Tuple of emg data, labels
-    """
-    with open(data_path, 'rb') as f:
-        data = pickle.load(f)
-
-    return data[:, :-1], data[:, -1:]
 
 
 def segment_by_grasp(emg_data, labels, grasp_id):

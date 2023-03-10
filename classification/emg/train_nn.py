@@ -12,20 +12,20 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 import matplotlib.pyplot as plt
 
-from classification.utils.data_processing import get_all_subject_data, save_formatted_data
+from classification.utils.data_pipeline import get_all_subject_data, save_formatted_data
 from classification.config import cfg
 from classification.emg.models import MLP_MODEL, CNN_MODEL
 
 
 def train_nn_model(train_data, train_labels, val_data, val_labels, model, batch_size, num_epochs, learning_rate, save_path):
     '''
-    Train a neural network with an optimizer and specified data_processing/parameters.
-    :param train_data: Array of input training data_processing
+    Train a neural network with an optimizer and specified data_pipeline/parameters.
+    :param train_data: Array of input training data_pipeline
     :param train_labels: Array of ground-truth training labels
-    :param val_data: Array of input validation data_processing
+    :param val_data: Array of input validation data_pipeline
     :param val_labels: Array of ground-truth validation labels
     :param model: PyTorch Module neural network
-    :param batch_size: Int, batch size of data_processing at each forward pass
+    :param batch_size: Int, batch size of data_pipeline at each forward pass
     :param num_epochs: Int, number of epochs to train for
     :param learning_rate: Float, learning rate for model
     :param save_path: String, path to save best model over all epochs
@@ -112,13 +112,13 @@ def cross_val(data, labels, model, num_folds, healthy_ids, affected_ids, batch_s
               save_dir, train_ml=False):
     '''
     Perform Cross-Validation for given dataset and subjects.
-    :param data: NumPy array containing data_processing of subjects.
+    :param data: NumPy array containing data_pipeline of subjects.
     :param labels: NumPy array containing ground-truth labels.
     :param model: Classification model to train and validate (ex. kNN, SVM, DT, etc.)
     :param num_folds: Int, represents number of folds
     :param healthy_ids: List of String, ids of healthy subjects
     :param affected_ids: List of String, ids of affected subjects
-    :param batch_size: Int, batch size of data_processing at each forward pass
+    :param batch_size: Int, batch size of data_pipeline at each forward pass
     :param num_epochs: Int, number of epochs to train for
     :param learning_rate: Float, learning rate for model
     :param save_dir: String, path to directory where results should be saved
@@ -197,11 +197,11 @@ def unison_shuffle(arr_a, arr_b):
 
 def create_dataset_from_dict(data_dict, labels_dict, features_list):
     '''
-    Create final data_processing and labels datasets beased on requested features and initial dicts.
-    :param data_dict: Dictionary containing all feature data_processing by subject
+    Create final data_pipeline and labels datasets beased on requested features and initial dicts.
+    :param data_dict: Dictionary containing all feature data_pipeline by subject
     :param labels_dict: Dictionary containing all labels by subject
     :param features_list: List of desired features to retain for dataset
-    :return: Dictionaries of data_processing and labels containing pertinent feature data_processing
+    :return: Dictionaries of data_pipeline and labels containing pertinent feature data_pipeline
     '''
     final_data = {}
     final_labels = {}
@@ -220,7 +220,7 @@ if __name__ == "__main__":
     # healthy_subjects = []
     affected_subjects = cfg['AFFECTED_SUBJECTS']
     affected_subjects = []
-    subject_nums = healthy_subjects + affected_subjects
+    subject_ids = healthy_subjects + affected_subjects
     save_dir = cfg['SAVE_MODEL_PATH']
     data_col = cfg['DATA_COL_NAME']
     label_col = cfg['LABEL_COL_NAME']
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     learning_rate = cfg['LR']
 
     dataset_params = {'data_path': data_path,
-                      'subject_nums': subject_nums,
+                      'subject_ids': subject_ids,
                       'data_col': data_col,
                       'label_col': label_col,
                       'labels_needed': labels_needed,

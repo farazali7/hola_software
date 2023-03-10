@@ -9,7 +9,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
-from classification.utils.data_processing import get_all_subject_data, save_formatted_data
+from classification.utils.data_pipeline import get_all_subject_data, save_formatted_data
 from classification.config import cfg
 
 
@@ -57,7 +57,7 @@ def create_cv_folds(healthy_ids, affected_ids, num_folds):
 def cross_val(data, labels, model, num_folds, healthy_ids, affected_ids, save_dir):
     '''
     Perform Cross-Validation for given dataset and subjects.
-    :param data: NumPy array containing data_processing of subjects.
+    :param data: NumPy array containing data_pipeline of subjects.
     :param labels: NumPy array containing ground-truth labels.
     :param model: Classification model to train and validate (ex. kNN, SVM, DT, etc.)
     :param num_folds: Int, represents number of folds
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     healthy_subjects = cfg['HEALTHY_SUBJECTS']
     # healthy_subjects = []
     affected_subjects = cfg['AFFECTED_SUBJECTS']
-    subject_nums = healthy_subjects + affected_subjects
+    subject_ids = healthy_subjects + affected_subjects
     save_dir = cfg['SAVE_MODEL_PATH']
     data_col = cfg['DATA_COL_NAME']
     label_col = cfg['LABEL_COL_NAME']
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     models = {'DecisionTree': dt_clf}
 
     dataset_params = {'data_path': data_path,
-                      'subject_nums': subject_nums,
+                      'subject_ids': subject_ids,
                       'data_col': data_col,
                       'label_col': label_col,
                       'labels_needed': labels_needed,
