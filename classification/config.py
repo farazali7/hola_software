@@ -1,3 +1,4 @@
+import os
 
 cfg = {
     'DATASETS': {
@@ -26,6 +27,7 @@ cfg = {
             'HEALTHY_SUBJECTS': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
                                  21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                  40, 41, 42, 43],
+            'OPEN_HAND_LABEL': 3,  # Since 0-2 are taken by Rest, TVG, LP
             #  First two pairs are near bottom and last three pairs are near top (all monopolar)
             #  Each in order of [closer to elbow, distal], zero-indexed
             #  In original indexing (GM to NP): top: (6->8) (7->1) (8->2), bot: (2->4) (4->6)
@@ -36,10 +38,11 @@ cfg = {
     'DATA_FILE': 'grasp_2_5_w400_sepch_data.pkl',
     'LABEL_FILE': 'grasp_2_5_w400_sepch_labels.pkl',
     'SAVE_MODEL_PATH': 'results/models',
+    'SAVE_SPLITS_PATH': 'results/models',
 
     # Preprocessing args
     'BUTTERWORTH_ORDER': 4,
-    'BUTTERWORTH_FREQ': 20,
+    'BUTTERWORTH_FREQ': [20, 125],
     'NOTCH_FREQ': 60,
     'QUALITY_FACTOR': 30.0,
     'TARGET_FREQ': 250,  # Frequency expected in real-time acquisition
@@ -50,14 +53,63 @@ cfg = {
     'COMBINE_CHANNELS': False,
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
 
+    'MODEL_ARCHITECTURE': 'MLP',
+    'EXPERIMENT_TYPE': 'train',
+
     # Training & validation args
-    'CV_FOLDS': 5,
     'BATCH_SIZE': 200,
-    'EPOCHS': 10,
+    'EPOCHS': 1,
     'LR': 0.001,
+    'SHUFFLE': True,
+    'NUM_WORKERS': os.cpu_count(),
 
-    'LABEL_MAP': {2: 0,
-                  5: 1},  # 2 is LP (negative class) and 5 is TVG (positive class)
+    'CALLBACKS': {
+        'EARLY_STOPPING': {
+            'monitor': 'val_Macro F1-Score',
+            'min_delta': 0.001,
+            'patience': 5
+        },
+        'MODEL_CHECKPOINT': {
+            'filename': '{epoch}--{val_Macro F1-Score:.2f}',
+            'monitor': 'val_Macro F1-Score',
+            'mode': 'max',
+            'auto_insert_metric_name': True
+        }
+    },
 
-    'FEATURES': ['rms', 'mav', 'var', 'mdwt']
+    # Data partitioning args
+    'CV_FOLDS': 2,
+    'TEST_SET_PERCENTAGE': 0.9,
+
+    'CLASSES': ['Remainder', 'TVG', 'LP', 'OH'],  # In label order
+
+    'FEATURES': ['rms', 'mav', 'var', 'mdwt'],
+
+    'GLOBAL_SEED': 7,
+
+    'HYPERPARAMETER_SEARCH': {
+        'SWEEP_SETTINGS': {
+            "method": "bayes",
+            "metric": {
+                "name": "Mean CV F1-Score",
+                "goal": "maximize"
+            },
+        },
+        'N_EVALS': 1,
+        'MLP': {
+            "dropout": {
+                "min": 0.0,
+                "max": 0.5
+            },
+            "learning_rate": {
+                "min": 0.001,
+                "max": 0.01
+            }
+        }
+    },
+
+    'WANDB': {
+        'PROJECT': 'HOLA',
+        'ENTITY': 'fali'
+    }
 }

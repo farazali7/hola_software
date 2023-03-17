@@ -2,9 +2,9 @@ import os
 import pickle
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-from classification.utils.preprocessing import window_data, homogenize_window, butter_highpass_filter, notch_filter, \
-    resample
-from classification.utils.feature_extraction.features import rms, mav, var, dwt, hjorth_mobility, hjorth_complexity
+from classification.utils.preprocessing import window_data, homogenize_window, butter_bandpass_filter, notch_filter, \
+    downsample
+from classification.utils.feature_extraction.features import rms, mav, var, dwt, hjorth_complexity
 from classification.utils.data_pipeline import save_data, load_data
 from classification.config import cfg
 
@@ -20,7 +20,7 @@ def preprocess_data(emg_data, grasp_labels, butter_ord, butter_freq, notch_freq,
     :param emg_data: Array of EMG data
     :param grasp_labels: Array of respective grasp labels to EMG data
     :param butter_ord: Integer for butterworth filter order
-    :param butter_freq: High-pass frequency cutoff
+    :param butter_freq: Cutoff frequency(ies)
     :param notch_freq: Frequency to remove from data
     :param qf: Quality factor, represents the ratio between center frequency and bandwidth (high for notch)
     :param sampling_freq: Integer for sampling frequency of emg_data
@@ -28,19 +28,18 @@ def preprocess_data(emg_data, grasp_labels, butter_ord, butter_freq, notch_freq,
     :param from_np: Boolean denoting if data from Ninapro is being used (if True, this will regroup grasp labels)
     :param save_path: String, path to save the data in
     """
-    # Resample if desired
-    if target_freq is not None:
-        data = np.concatenate([emg_data, grasp_labels], axis=1)
-        resampled_data = resample(data, target_freq, sampling_freq)
-        last_dim = resampled_data.shape[1]-1
-        emg_data, grasp_labels = resampled_data[:, :last_dim], resampled_data[:, last_dim:]
-        sampling_freq = target_freq
-
     # Remove cable sway and extraneous frequencies
-    emg_data = butter_highpass_filter(emg_data, butter_ord, butter_freq, sampling_freq)
+    emg_data = butter_bandpass_filter(emg_data, butter_ord, butter_freq, sampling_freq)
 
     # Remove main line interference
     emg_data = notch_filter(emg_data, notch_freq, qf, sampling_freq)
+
+    # Resample if desired
+    if target_freq is not None:
+        data = np.concatenate([emg_data, grasp_labels], axis=1)
+        resampled_data = downsample(data, target_freq, sampling_freq)
+        last_dim = resampled_data.shape[1]-1
+        emg_data, grasp_labels = resampled_data[:, :last_dim], resampled_data[:, last_dim:]
 
     # Assign non-TVG, non-LP labels to rest class (i.e., make a 'catch-all' class)
     if from_np:
@@ -84,11 +83,11 @@ def extract_features(emg_data, grasp_labels, window_size, window_overlap_size,
     # Variance
     emg_var = var(emg_windows, axis=axis)
 
-    # Hjorth Mobility
-    emg_hjorth_mobility = hjorth_mobility(emg_windows)
-
-    # Hjorth Complexity
-    emg_hjorth_complexity = hjorth_complexity(emg_windows, precomputed_mobility=emg_hjorth_mobility)
+    # Hjorth Mobility & Complexity
+    emg_hjorth_mobility, emg_hjorth_complexity = hjorth_complexity(emg_windows,
+                                                                   var_data=emg_var,
+                                                                   var_axis=axis,
+                                                                   return_mobility=True)
 
     # marginal Discrete Wavelet Transform (mDWT)
     emg_mdwt = dwt(emg_windows, family='db7', level=2, axis=axis)

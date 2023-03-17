@@ -134,3 +134,5 @@ data/
 */results/visualizations/
 **.DS_Store
 .idea/
+wandb/
+lightning_logs/

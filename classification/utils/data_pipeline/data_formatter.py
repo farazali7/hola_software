@@ -43,13 +43,14 @@ def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, electro
     return emg_data, grasp_labels
 
 
-def format_grabmyo_data(subject_id, all_records, electrode_ids, save_dir=None):
+def format_grabmyo_data(subject_id, all_records, electrode_ids, new_label, save_dir=None):
     '''
     Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
     dataset.
     :param subject_id: Int, subject number specified by database file naming for specific subject
     :param all_records: Dictionary specifying PhysioNet records for subjects (not unique here for multiprocessing)
     :param electrode_ids: Array of ints representing IDs for electrode channels
+    :param new_label: Int specifying what number to assign to open hand labels
     :param save_dir: String, path to directory to save the data in
     :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
     '''
@@ -70,7 +71,7 @@ def format_grabmyo_data(subject_id, all_records, electrode_ids, save_dir=None):
         differential = channels[:, 0] - channels[:, 1]  #
         bipolar_data.append(differential)
     bipolar_data = np.transpose(np.array(bipolar_data))
-    grasp_labels = np.full(bipolar_data.shape[0], -1)[..., np.newaxis]
+    grasp_labels = np.full(bipolar_data.shape[0], new_label)[..., np.newaxis]
 
     subject_id += 115  # Offset from subjects in NinaProDB10
 
@@ -139,6 +140,7 @@ if __name__ == '__main__':
     electrode_ids = gm_cfg['ELECTRODE_IDS']
     healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
     subject_ids = healthy_subjects
+    open_hand_label = gm_cfg['OPEN_HAND_LABEL']
     save_dir = os.path.join(base_save_dir, 'grabmyo_openhand')
 
     records = wfdb.get_record_list('grabmyo')
@@ -147,6 +149,7 @@ if __name__ == '__main__':
 
     format_params = {'electrode_ids': electrode_ids,
                      'all_records': records_by_subject,
+                     'new_label': open_hand_label,
                      'save_dir': save_dir}
 
     with Pool() as pool:
