@@ -80,7 +80,8 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
     callbacks = define_callbacks(callback_args)
 
     # Trainer
-    trainer = Trainer(callbacks=callbacks, max_epochs=num_epochs, deterministic=True, logger=logger)
+    trainer = Trainer(callbacks=callbacks, max_epochs=num_epochs, deterministic=True, logger=logger,
+                      devices=8, accelerator='tpu')
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     # Load and return best model
