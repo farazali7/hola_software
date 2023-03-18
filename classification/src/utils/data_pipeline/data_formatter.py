@@ -8,7 +8,7 @@ from scipy.io import loadmat
 from tqdm import tqdm
 
 from classification.config import cfg
-from classification.utils.data_pipeline import save_data
+from classification.src.utils.data_pipeline import save_data
 
 
 def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, electrode_ids, save_dir=None):

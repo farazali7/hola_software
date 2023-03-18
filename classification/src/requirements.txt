@@ -16,3 +16,4 @@ wfdb
 pytorch-lightning
 torchmetrics
 wandb
+sagemaker

@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from classification.config import cfg
 import pytorch_lightning as pl
 
 
@@ -243,7 +242,7 @@ class CNN_MODEL(nn.Module):
     def __init__(self, model_cfg):
         super(CNN_MODEL, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=5, out_channels=32, kernel_size=5)
-        self.hidden1 = nn.Linear(cfg['WINDOW_SIZE'], 512)
+        self.hidden1 = nn.Linear(20, 512)
         self.hidden2 = nn.Linear(512, 256)
         self.dropout = nn.Dropout(model_cfg['dropout'])
         self.output = nn.Linear(256, 1)

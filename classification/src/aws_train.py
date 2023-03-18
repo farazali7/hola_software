@@ -1,17 +1,17 @@
 import datetime
 import os
 
-import numpy as np
+import argparse
 import pandas as pd
 import torch.utils.data
 
-from classification.config import cfg
-from classification.models.models import get_model, load_model_from_checkpoint
-from classification.utils.experimentation import stratified_partition, partition_dataset, create_equal_folds, \
+from config import cfg
+from models.models import get_model, load_model_from_checkpoint
+from utils.experimentation import partition_dataset, create_equal_folds, \
     compute_class_weights, flatten_dict, aggregate_predictions
-from classification.utils.data_pipeline import load_data, convert_to_full_paths, load_and_concat
+from utils.data_pipeline import convert_to_full_paths, load_and_concat
 from torchmetrics import MetricCollection, Accuracy, Precision, Recall, F1Score
-from classification.constants import CALLBACKS
+from constants import CALLBACKS
 
 from pytorch_lightning.trainer import Trainer
 from pytorch_lightning import seed_everything
@@ -21,7 +21,6 @@ import wandb
 
 from copy import deepcopy
 from functools import partial
-import subprocess
 
 GLOBAL_SEED = cfg['GLOBAL_SEED']
 
@@ -265,7 +264,7 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
         wandb_logger.log_table('Test Metrics', dataframe=test_metrics_df)
 
 
-def perform_experiment():
+def perform_experiment(data_path):
     """
     Perform a model training experiment.
     """
@@ -276,7 +275,7 @@ def perform_experiment():
 
     # Ninapro DB10 data
     np_cfg = cfg['DATASETS']['NINAPRO_DB10']
-    np_processed_data_path = np_cfg['PROCESSED_DATA_PATH']
+    np_processed_data_path = os.path.join(data_path, 'ninapro_db10/')
     np_healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
     np_healthy_subjects = convert_to_full_paths(np_healthy_subjects, np_processed_data_path)
     np_affected_subjects = np_cfg['AFFECTED_SUBJECTS']
@@ -284,7 +283,7 @@ def perform_experiment():
 
     # GrabMyo data
     gm_cfg = cfg['DATASETS']['GRABMYO']
-    gm_processed_data_path = gm_cfg['PROCESSED_DATA_PATH']
+    gm_processed_data_path = os.path.join(data_path, 'grabmyo_openhand/')
     gm_healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
     gm_healthy_subjects = ['S' + str(x + 115) for x in gm_healthy_subjects]
     gm_healthy_subjects = convert_to_full_paths(gm_healthy_subjects, gm_processed_data_path)
@@ -359,5 +358,22 @@ def perform_experiment():
 
 
 if __name__ == "__main__":
+    print("STARTED HEREEE")
+    parser = argparse.ArgumentParser()
+
+    # hyperparameters sent by the client are passed as command-line arguments to the script.
+    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--batch-size', type=int, default=64)
+    parser.add_argument('--gpus', type=int, default=1) # used to support multi-GPU or CPU training
+
+    # Data, model, and output directories. Passed by sagemaker with default to os env variables
+    parser.add_argument('-o','--output-data-dir', type=str, default=os.environ['SM_OUTPUT_DATA_DIR'])
+    parser.add_argument('-m','--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
+    parser.add_argument('-tr','--train', type=str, default=os.environ['SM_CHANNEL_TRAIN'])
+    # parser.add_argument('-te','--test', type=str, default=os.environ['SM_CHANNEL_TEST'])
+
+    args, _ = parser.parse_known_args()
+    print(args)
+
     perform_experiment()
     print('Done.')

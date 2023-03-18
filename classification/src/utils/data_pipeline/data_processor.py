@@ -1,11 +1,10 @@
 import os
-import pickle
 import numpy as np
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 from classification.utils.preprocessing import window_data, homogenize_window, butter_bandpass_filter, notch_filter, \
     downsample
 from classification.utils.feature_extraction.features import rms, mav, var, dwt, hjorth_complexity
-from classification.utils.data_pipeline import save_data, load_data
+from classification.src.utils.data_pipeline import save_data, load_data
 from classification.config import cfg
 
 from tqdm import tqdm

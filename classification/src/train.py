@@ -9,8 +9,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
-from classification.utils.data_pipeline import get_all_subject_data, save_formatted_data
-from classification.config import cfg
+from config import cfg
 
 
 def create_cv_folds(healthy_ids, affected_ids, num_folds):

@@ -1,4 +1,4 @@
-from classification.utils.feature_extraction import features
+from utils.feature_extraction import features
 import pytest
 
 
