@@ -49,6 +49,10 @@ class Model(pl.LightningModule):
         self.fold = fold
         self.log_prefix = 'fold_'+str(self.fold)+'/'
 
+        self.train_step_outputs = []
+        self.val_step_outputs = []
+        self.test_step_outputs = []
+
         self.save_hyperparameters()
 
     def training_step(self, batch, batch_idx):
@@ -59,22 +63,25 @@ class Model(pl.LightningModule):
 
         _, preds = torch.max(torch.nn.Softmax(dim=1)(outputs.detach()), 1)
 
-        return {'loss': loss, 'preds': preds, 'targets': targets}
+        # Log and accumulate
+        res = {'loss': loss, 'preds': preds, 'targets': targets}
+        self.train_step_outputs.append(res)
 
-    def training_step_end(self, outputs):
-        train_metrics_out = self.train_metrics(outputs['preds'], outputs['targets'])
+        train_metrics_out = self.train_metrics(preds, targets)
         self.log_metrics(train_metrics_out)
-        self.log(self.log_prefix+'train_loss', outputs['loss'])
+        self.log(self.log_prefix+'train_loss', loss)
 
-    def training_epoch_end(self, outputs):
+        return res
+
+    def on_train_epoch_end(self):
         train_metrics_out = self.train_metrics.compute()
         self.log_metrics(train_metrics_out)
         self.train_metrics.reset()
 
-        gathered = self.all_gather(outputs)
-        if self.global_rank == 0:
-            loss = sum(output['loss'].mean() for output in gathered) / len(outputs)
-            self.log(self.log_prefix+'epoch_train_loss', loss)
+        step_losses = [step_item['loss'] for step_item in self.train_step_outputs]
+        epoch_loss = torch.stack(step_losses).mean()
+        self.log(self.log_prefix+'epoch_train_loss', epoch_loss)
+        self.train_step_outputs.clear()  # free memory
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -84,23 +91,24 @@ class Model(pl.LightningModule):
 
         _, preds = torch.max(torch.nn.Softmax(dim=1)(outputs.detach()), 1)
 
-        return {'val_loss': val_loss, 'preds': preds, 'targets': targets}
+        # Log and accumulate
+        res = {'val_loss': val_loss, 'preds': preds, 'targets': targets}
+        self.val_step_outputs.append(res)
 
-    def validation_step_end(self, outputs):
-        self.val_metrics.update(outputs['preds'], outputs['targets'])
-        self.log(self.log_prefix+'val_loss', outputs['val_loss'])
+        self.val_metrics.update(preds, targets)
+        self.log(self.log_prefix+'val_loss', val_loss)
 
-    def validation_epoch_end(self, outputs):
+        return res
+
+    def on_validation_epoch_end(self):
         valid_metrics_out = self.val_metrics.compute()
         self.log_metrics(valid_metrics_out)
         self.val_metrics.reset()
 
-        gathered = self.all_gather(outputs)
-        if self.global_rank == 0:
-            loss = sum(output['val_loss'].mean() for output in gathered) / len(outputs)
-            self.log(self.log_prefix+'epoch_val_loss', loss)
-
-        return valid_metrics_out
+        step_losses = [step_item['val_loss'] for step_item in self.val_step_outputs]
+        epoch_loss = torch.stack(step_losses).mean()
+        self.log(self.log_prefix+'epoch_val_loss', epoch_loss)
+        self.val_step_outputs.clear()  # free memory
 
     def test_step(self, batch, batch_idx):
         x, y = batch
@@ -110,15 +118,19 @@ class Model(pl.LightningModule):
 
         _, preds = torch.max(torch.nn.Softmax(dim=1)(outputs.detach()), 1)
 
-        return {'test_loss': test_loss, 'preds': preds, 'targets': targets}
+        # Log and accumulate
+        res = {'test_loss': test_loss, 'preds': preds, 'targets': targets}
+        self.test_step_outputs.append(res)
+        self.test_metrics.update(preds, targets)
 
-    def test_step_end(self, outputs):
-        self.test_metrics.update(outputs['preds'], outputs['targets'])
+        return res
 
-    def test_epoch_end(self, outputs):
+    def on_test_epoch_end(self):
         test_metrics_out = self.test_metrics.compute()
         self.log_metrics(test_metrics_out)
         self.test_metrics.reset()
+
+        self.test_step_outputs.clear()
 
     def predict_step(self, batch, batch_idx):
         x, y = batch
