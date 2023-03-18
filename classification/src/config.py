@@ -57,8 +57,8 @@ cfg = {
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
-    'BATCH_SIZE': 200,
-    'EPOCHS': 1,
+    'BATCH_SIZE': 256,
+    'EPOCHS': 50,
     'LR': 0.001,
     'SHUFFLE': True,
     'NUM_WORKERS': os.cpu_count(),
@@ -78,8 +78,8 @@ cfg = {
     },
 
     # Data partitioning args
-    'CV_FOLDS': 2,
-    'TEST_SET_PERCENTAGE': 0.9,
+    'CV_FOLDS': 5,
+    'TEST_SET_PERCENTAGE': 0.1,
 
     'CLASSES': ['Remainder', 'TVG', 'LP', 'OH'],  # In label order
 
@@ -95,13 +95,14 @@ cfg = {
                 "goal": "maximize"
             },
         },
-        'N_EVALS': 1,
+        'N_EVALS': 5,
         'MLP': {
             "dropout": {
                 "min": 0.0,
                 "max": 0.5
             },
             "learning_rate": {
+                "distribution": "log_uniform_values",
                 "min": 0.001,
                 "max": 0.01
             }
