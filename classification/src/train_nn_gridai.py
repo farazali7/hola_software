@@ -40,7 +40,8 @@ def define_callbacks(kwargs):
 
 
 def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
-                   model_args, trainer_args, data_loader_args, callback_args, num_epochs, logger):
+                   model_args, trainer_args, data_loader_args, callback_args, num_epochs,
+                   gpus, logger):
     """
     Train a neural network with an optimizer and specified data_pipeline/parameters.
     :param train_data: List containing data IDs for training subjects
@@ -51,6 +52,7 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
     :param data_loader_args: Dictionary of keyword arguments such as batch size, shuffling, num workers, etc.
     :param callback_args: Dictionary of callback specifications
     :param num_epochs: Int for number of max epochs
+    :param gpus: Int for number of gpus
     :param logger: Logger object
     """
     # Create Torch dataloaders
@@ -77,7 +79,7 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
     callbacks = define_callbacks(callback_args)
 
     # Trainer
-    trainer = Trainer(callbacks=callbacks, max_epochs=num_epochs, deterministic=True, logger=logger)
+    trainer = Trainer(callbacks=callbacks, max_epochs=num_epochs, deterministic=True, logger=logger, gpus=gpus)
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     # Load and return best model
@@ -198,7 +200,7 @@ def train_single(train_set, model_def, training_params, num_folds, logger, save_
 
 
 def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_args, data_loader_args, num_epochs,
-                       num_folds, save_dir):
+                       num_folds, gpus, save_dir):
     """
     Perform an iteration of a hyperparameter sweep.
     :param train_set: List of training data from data sources
@@ -209,6 +211,7 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
     :param data_loader_args: Dictionary of data loader keyword arguments
     :param num_epochs: Int for max number of epochs per train run
     :param num_folds: Int for number of k-fold cross validation folds
+    :param gpus: Int for number of gpus to train on
     :param save_dir: String for path to save
     """
     with wandb.init(project=cfg['WANDB']['PROJECT'], entity=cfg['WANDB']['ENTITY']):
@@ -227,7 +230,8 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
                            'trainer_args': trainer_args,
                            'data_loader_args': data_loader_args,
                            'callback_args': callback_args,
-                           'num_epochs': num_epochs}
+                           'num_epochs': num_epochs,
+                           'gpus': gpus}
 
         model_score, model_path = train_single(train_set=train_set,
                                                model_def=model_def,
@@ -352,6 +356,7 @@ def perform_experiment(args):
                                            data_loader_args=data_loader_args,
                                            num_epochs=num_epochs,
                                            num_folds=num_folds,
+                                           gpus=args.gpus,
                                            save_dir=save_dir), count=cfg['HYPERPARAMETER_SEARCH']['N_EVALS'])
 
     # Stop sweep
