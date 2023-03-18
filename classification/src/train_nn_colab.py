@@ -303,7 +303,7 @@ def perform_experiment():
     shuffle = cfg['SHUFFLE']
     num_workers = cfg['NUM_WORKERS']
 
-    data_loader_args = {'batch_size': batch_size,
+    data_loader_args = {'batch_size': 2048,
                         'shuffle': shuffle,
                         'num_workers': num_workers}
 
