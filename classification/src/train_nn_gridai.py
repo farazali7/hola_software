@@ -24,6 +24,8 @@ from functools import partial
 
 GLOBAL_SEED = cfg['GLOBAL_SEED']
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def define_callbacks(kwargs):
     callbacks = []
@@ -69,7 +71,7 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
     val_loader = torch.utils.data.DataLoader(val_dataset, **val_data_loader_args)
 
     # Compute class weights
-    class_weights = compute_class_weights(train_labels)
+    class_weights = compute_class_weights(train_labels).to(device)
     trainer_args['class_weights'] = class_weights
 
     # Get model
