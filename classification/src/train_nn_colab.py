@@ -1,5 +1,6 @@
 import datetime
 import os
+import argparse
 
 import pandas as pd
 import torch.utils.data
@@ -22,6 +23,8 @@ from copy import deepcopy
 from functools import partial
 
 GLOBAL_SEED = cfg['GLOBAL_SEED']
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def define_callbacks(kwargs):
@@ -50,6 +53,7 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
     :param data_loader_args: Dictionary of keyword arguments such as batch size, shuffling, num workers, etc.
     :param callback_args: Dictionary of callback specifications
     :param num_epochs: Int for number of max epochs
+    :param gpus: Int for number of gpus
     :param logger: Logger object
     """
     # Create Torch dataloaders
@@ -66,7 +70,7 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
     val_loader = torch.utils.data.DataLoader(val_dataset, **val_data_loader_args)
 
     # Compute class weights
-    class_weights = compute_class_weights(train_labels)
+    class_weights = compute_class_weights(train_labels).to(device)
     trainer_args['class_weights'] = class_weights
 
     # Get model
@@ -208,6 +212,7 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
     :param data_loader_args: Dictionary of data loader keyword arguments
     :param num_epochs: Int for max number of epochs per train run
     :param num_folds: Int for number of k-fold cross validation folds
+    :param gpus: Int for number of gpus to train on
     :param save_dir: String for path to save
     """
     with wandb.init(project=cfg['WANDB']['PROJECT'], entity=cfg['WANDB']['ENTITY']):
@@ -266,15 +271,18 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
 def perform_experiment():
     """
     Perform a model training experiment.
+    :param args: Passed in from grid.ai script.
     """
     seed_everything(cfg['GLOBAL_SEED'])
 
     wandb_entity = cfg['WANDB']['ENTITY']
     wandb_project = cfg['WANDB']['PROJECT']
 
+    main_data_path = '../drive/MyDrive/hola_data/iter1/processed'
+
     # Ninapro DB10 data
     np_cfg = cfg['DATASETS']['NINAPRO_DB10']
-    np_processed_data_path = np_cfg['PROCESSED_DATA_PATH']
+    np_processed_data_path = os.path.join(main_data_path, 'ninapro_db10')
     np_healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
     np_healthy_subjects = convert_to_full_paths(np_healthy_subjects, np_processed_data_path)
     np_affected_subjects = np_cfg['AFFECTED_SUBJECTS']
@@ -282,7 +290,7 @@ def perform_experiment():
 
     # GrabMyo data
     gm_cfg = cfg['DATASETS']['GRABMYO']
-    gm_processed_data_path = gm_cfg['PROCESSED_DATA_PATH']
+    gm_processed_data_path = os.path.join(main_data_path, 'grabmyo_openhand')
     gm_healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
     gm_healthy_subjects = ['S' + str(x + 115) for x in gm_healthy_subjects]
     gm_healthy_subjects = convert_to_full_paths(gm_healthy_subjects, gm_processed_data_path)
@@ -357,5 +365,21 @@ def perform_experiment():
 
 
 if __name__ == "__main__":
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--gpus', type=int, default=0,
+    #                     help='number of gpus to use for training')
+    # parser.add_argument('--strategy', type=str, default='ddp',
+    #                     help='strategy to use for training')
+    # parser.add_argument('--batch_size', type=int, default=64,
+    #                     help='batch size to use for training')
+    # parser.add_argument('--epochs', type=int, default=5,
+    #                     help='maximum number of epochs for training')
+    # parser.add_argument('--data_dir', type=str, default='/datastores/cifar5',
+    #                     help='the directory to load data from')
+    # parser.add_argument('--learning_rate', type=float, default=1e-4,
+    #                     help='the learning rate to use during model training')
+    # parser.add_argument('--optimizer', type=str, default='Adam',
+    #                     help='the optimizer to use during model training')
+    # args = parser.parse_args()
     perform_experiment()
     print('Done.')
