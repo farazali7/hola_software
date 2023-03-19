@@ -275,7 +275,7 @@ class CNN_MODEL(nn.Module):
 class MLP_MODEL(nn.Module):
     def __init__(self, model_cfg):
         super(MLP_MODEL, self).__init__()
-        input_size = 5
+        input_size = 40
         self.hidden1 = nn.Linear(input_size, 128)
         self.hidden2 = nn.Linear(128, 64)
         self.hidden3 = nn.Linear(64, 32)

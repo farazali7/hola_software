@@ -7,11 +7,11 @@ import wfdb
 from scipy.io import loadmat
 from tqdm import tqdm
 
-from classification.config import cfg
+from classification.src.config import cfg
 from classification.src.utils.data_pipeline import save_data
 
 
-def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, electrode_ids, save_dir=None):
+def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, grasp_ids, electrode_ids, save_dir=None):
     '''
     Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
     dataset.
@@ -19,6 +19,7 @@ def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, electro
     :param subject_id: String, subject number specified by dataset file naming for specific subject
     :param data_col: String, column name for data_pipeline
     :param label_col: String, column name for labels,
+    :param grasp_ids: List of grasp int IDs
     :param electrode_ids: Array of ints representing IDs for electrode channels
     :param save_dir: String, path to directory to save the data in
     :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
@@ -29,8 +30,9 @@ def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, electro
     dynamic_state = data['redynamic']
     static_idxs = np.isin(dynamic_state, 0).ravel()
 
-    # filter_idxs = np.logical_and(static_idxs)
-    filter_idxs = static_idxs
+    # Get grasp label indices
+    grasp_idxs = np.isin(data[label_col], grasp_ids).ravel()
+    filter_idxs = np.logical_and(static_idxs, grasp_idxs)
 
     # Apply filters and get relevant electrode channels
     emg_data = data[data_col][filter_idxs][:, electrode_ids]
@@ -110,7 +112,7 @@ def organize_pn_records(record_list):
 
 
 if __name__ == '__main__':
-    base_save_dir = 'data/formatted'
+    base_save_dir = 'data/formatted/iter2'
 
     # NINAPRO DB10
     np_cfg = cfg['DATASETS']['NINAPRO_DB10']
@@ -120,18 +122,23 @@ if __name__ == '__main__':
     subject_ids = healthy_subjects + affected_subjects
     data_col = np_cfg['DATA_COL_NAME']
     label_col = np_cfg['LABEL_COL_NAME']
+    grasp_ids = np_cfg['GRASP_LABELS']
     electrode_ids = np_cfg['ELECTRODE_IDS']
-    save_dir = np_cfg['FORMATTED_DATA_PATH']
+    save_dir = os.path.join(base_save_dir, 'ninapro_db10')
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     format_params = {'data_path': raw_data_path,
                      'data_col': data_col,
                      'label_col': label_col,
+                     'grasp_ids': grasp_ids,
                      'electrode_ids': electrode_ids,
                      'save_dir': save_dir}
 
-    # with Pool() as pool:
-    #     res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
-    #                     total=len(subject_ids)))
+    with Pool() as pool:
+        res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
+                        total=len(subject_ids)))
 
     print('Done.')
 
@@ -143,6 +150,9 @@ if __name__ == '__main__':
     open_hand_label = gm_cfg['OPEN_HAND_LABEL']
     save_dir = os.path.join(base_save_dir, 'grabmyo_openhand')
 
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     records = wfdb.get_record_list('grabmyo')
     filtered_records = set([record.split('\n')[0] for record in records if conditions_met(record)])
     records_by_subject = organize_pn_records(filtered_records)
@@ -152,8 +162,8 @@ if __name__ == '__main__':
                      'new_label': open_hand_label,
                      'save_dir': save_dir}
 
-    with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(format_grabmyo_data, **format_params), records_by_subject.keys()),
-                        total=len(records_by_subject.keys())))
+    # with Pool() as pool:
+    #     res = list(tqdm(pool.imap(partial(format_grabmyo_data, **format_params), records_by_subject.keys()),
+    #                     total=len(records_by_subject.keys())))
 
     print('Done.')

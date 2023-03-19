@@ -1,11 +1,11 @@
 import os
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-from classification.utils.preprocessing import window_data, homogenize_window, butter_bandpass_filter, notch_filter, \
+from classification.src.utils.preprocessing import window_data, homogenize_window, butter_bandpass_filter, notch_filter, \
     downsample
-from classification.utils.feature_extraction.features import rms, mav, var, dwt, hjorth_complexity
+from classification.src.utils.feature_extraction.features import rms, mav, var, dwt, hjorth_complexity
 from classification.src.utils.data_pipeline import save_data, load_data
-from classification.config import cfg
+from classification.src.config import cfg
 
 from tqdm import tqdm
 from functools import partial
@@ -99,7 +99,7 @@ def extract_features(emg_data, grasp_labels, window_size, window_overlap_size,
     scaled_features = [ss.fit_transform(feature) for feature in raw_features]
 
     # TODO: Can also try np.stack to get 3D feature set instead
-    emg_features = np.concatenate(scaled_features, axis=0)
+    emg_features = np.concatenate(scaled_features, axis=1)
     labels = np.repeat(homog_label_windows, emg_features.shape[0] // homog_label_windows.shape[0])[..., np.newaxis]
     # for feature in emg_features.keys():
     #     labels[feature] = np.repeat(homog_label_windows, emg_features[feature].shape[0] // homog_label_windows.shape[0])
@@ -161,6 +161,9 @@ if __name__ == '__main__':
     save_dir = np_cfg['PROCESSED_DATA_PATH']
     np_sampling_freq = np_cfg['SAMPLING_FREQ']
 
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     preprocessing_args = {'butter_ord': butter_ord,
                           'butter_freq': butter_freq,
                           'notch_freq': notch_freq,
@@ -191,6 +194,9 @@ if __name__ == '__main__':
     subject_ids = ['S'+str(x+115) for x in healthy_subjects]
     save_dir = gm_cfg['PROCESSED_DATA_PATH']
     gm_sampling_freq = gm_cfg['SAMPLING_FREQ']
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     preprocessing_args = {'butter_ord': butter_ord,
                           'butter_freq': butter_freq,
