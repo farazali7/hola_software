@@ -58,17 +58,17 @@ cfg = {
 
     # Training & validation args
     'BATCH_SIZE': 256,
-    'EPOCHS': 50,
+    'EPOCHS': 40,
     'LR': 0.001,
     'SHUFFLE': True,
     'NUM_WORKERS': os.cpu_count(),
 
     'CALLBACKS': {
-        'EARLY_STOPPING': {
-            'monitor': 'val_Macro F1-Score',
-            'min_delta': 0.001,
-            'patience': 8
-        },
+        # 'EARLY_STOPPING': {
+        #     'monitor': 'val_Macro F1-Score',
+        #     'min_delta': 0.001,
+        #     'patience': 8
+        # },
         'MODEL_CHECKPOINT': {
             'filename': '{epoch}--{val_Macro F1-Score:.2f}',
             'monitor': 'val_Macro F1-Score',
