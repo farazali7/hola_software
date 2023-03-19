@@ -283,6 +283,7 @@ def perform_experiment(args):
     # Ninapro DB10 data
     np_cfg = cfg['DATASETS']['NINAPRO_DB10']
     np_processed_data_path = os.path.join(args.data_dir, 'ninapro_db10')
+    print(np_processed_data_path)
     np_healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
     np_healthy_subjects = convert_to_full_paths(np_healthy_subjects, np_processed_data_path)
     np_affected_subjects = np_cfg['AFFECTED_SUBJECTS']
