@@ -142,9 +142,10 @@ def cross_val(data, model_def, training_params, num_folds, logger, save_dir=None
         training_params_fold['callback_args']['MODEL_CHECKPOINT']['monitor'] = monitor_metric_prefix + \
                                                                                training_params_fold['callback_args'][
                                                                                    'MODEL_CHECKPOINT']['monitor']
-        training_params_fold['callback_args']['EARLY_STOPPING']['monitor'] = monitor_metric_prefix + \
-                                                                             training_params_fold['callback_args'][
-                                                                                 'EARLY_STOPPING']['monitor']
+        if 'EARLY_STOPPING' in training_params_fold['callback_args']:
+            training_params_fold['callback_args']['EARLY_STOPPING']['monitor'] = monitor_metric_prefix + \
+                                                                                 training_params_fold['callback_args'][
+                                                                                     'EARLY_STOPPING']['monitor']
         val_metrics, fold_ckpt = train_nn_model(train_data=all_train_x,
                                                 train_labels=all_train_y,
                                                 val_data=all_val_x,
