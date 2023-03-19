@@ -111,7 +111,7 @@ cfg = {
         'MLP_ITER2': {
             "dropout": {
                 "distribution": "uniform",
-                "min": 0.0,
+                "min": 0.3,
                 "max": 0.5
             },
             "learning_rate": {
