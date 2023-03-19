@@ -15,6 +15,8 @@ def get_model(model_name, model_args, trainer_args):
     """
     if model_name == 'MLP':
         model_def = MLP_MODEL(model_args)
+    elif model_name == 'MLP_ITER2':
+        model_def = MLP_MODEL_ITER2(model_args)
     elif model_name == 'CNN':
         model_def = CNN_MODEL(model_args)
     else:
@@ -61,7 +63,7 @@ class Model(pl.LightningModule):
         targets = torch.squeeze(y)
         loss = nn.CrossEntropyLoss(weight=self.class_weights)(outputs, targets)
 
-        _, preds = torch.max(torch.nn.Softmax(dim=1)(outputs.detach()), 1)
+        _, preds = torch.max(outputs.detach(), 1)
 
         # Log and accumulate
         res = {'loss': loss, 'preds': preds, 'targets': targets}
@@ -69,7 +71,7 @@ class Model(pl.LightningModule):
 
         train_metrics_out = self.train_metrics(preds, targets)
         self.log_metrics(train_metrics_out)
-        self.log(self.log_prefix+'train_loss', loss)
+        self.log(self.log_prefix+'train_loss', loss, prog_bar=True)
 
         return res
 
@@ -89,14 +91,14 @@ class Model(pl.LightningModule):
         targets = torch.squeeze(y)
         val_loss = nn.CrossEntropyLoss()(outputs, targets)
 
-        _, preds = torch.max(torch.nn.Softmax(dim=1)(outputs.detach()), 1)
+        _, preds = torch.max(outputs.detach(), 1)
 
         # Log and accumulate
         res = {'val_loss': val_loss, 'preds': preds, 'targets': targets}
         self.val_step_outputs.append(res)
 
         self.val_metrics.update(preds, targets)
-        self.log(self.log_prefix+'val_loss', val_loss)
+        self.log(self.log_prefix+'val_loss', val_loss, prog_bar=True)
 
         return res
 
@@ -116,7 +118,7 @@ class Model(pl.LightningModule):
         targets = torch.squeeze(y)
         test_loss = nn.CrossEntropyLoss()(outputs, targets)
 
-        _, preds = torch.max(torch.nn.Softmax(dim=1)(outputs.detach()), 1)
+        _, preds = torch.max(outputs.detach(), 1)
 
         # Log and accumulate
         res = {'test_loss': test_loss, 'preds': preds, 'targets': targets}
@@ -137,7 +139,7 @@ class Model(pl.LightningModule):
         outputs = self.model(x)
         targets = torch.squeeze(y)
 
-        _, preds = torch.max(torch.nn.Softmax(dim=1)(outputs.detach()), 1)
+        _, preds = torch.max(outputs.detach(), 1)
 
         return {'preds': preds, 'targets': targets}
 
@@ -272,10 +274,43 @@ class CNN_MODEL(nn.Module):
         return self.output(x)
 
 
+class MLP_MODEL_ITER2(nn.Module):
+    def __init__(self, model_cfg):
+        super(MLP_MODEL_ITER2, self).__init__()
+        input_size = 40
+        self.hidden1 = nn.Linear(input_size, 128)
+        self.hidden2 = nn.Linear(128, 64)
+        self.hidden3 = nn.Linear(64, 32)
+        self.dropout = nn.Dropout(model_cfg['dropout'])
+        self.output = nn.Linear(32, 3)
+        self.output_activation = torch.nn.Sigmoid()
+
+        # def init_weights(m):
+        #     if isinstance(m, nn.Linear):
+        #         torch.nn.init.xavier_uniform_(m.weight)
+        #         m.bias.data.fill_(0)
+        #
+        # self.apply(init_weights)
+
+    def forward(self, x):
+        x = torch.flatten(x, 1)
+        x = self.hidden1(x)
+        x = self.dropout(x)
+        x = F.relu(x)
+        x = self.hidden2(x)
+        x = self.dropout(x)
+        x = self.hidden3(x)
+        x = F.relu(x)
+        x = self.output(x)
+        x = self.output_activation(x)
+
+        return x
+
+
 class MLP_MODEL(nn.Module):
     def __init__(self, model_cfg):
         super(MLP_MODEL, self).__init__()
-        input_size = 40
+        input_size = 5
         self.hidden1 = nn.Linear(input_size, 128)
         self.hidden2 = nn.Linear(128, 64)
         self.hidden3 = nn.Linear(64, 32)

@@ -53,7 +53,7 @@ cfg = {
     'COMBINE_CHANNELS': False,
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
 
-    'MODEL_ARCHITECTURE': 'MLP',
+    'MODEL_ARCHITECTURE': 'MLP_ITER2',
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
@@ -67,7 +67,7 @@ cfg = {
         'EARLY_STOPPING': {
             'monitor': 'val_Macro F1-Score',
             'min_delta': 0.001,
-            'patience': 5
+            'patience': 8
         },
         'MODEL_CHECKPOINT': {
             'filename': '{epoch}--{val_Macro F1-Score:.2f}',
@@ -81,7 +81,7 @@ cfg = {
     'CV_FOLDS': 5,
     'TEST_SET_PERCENTAGE': 0.1,
 
-    'CLASSES': ['Remainder', 'TVG', 'LP', 'OH'],  # In label order
+    'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
 
     'FEATURES': ['rms', 'mav', 'var', 'mdwt'],
 
@@ -97,6 +97,18 @@ cfg = {
         },
         'N_EVALS': 5,
         'MLP': {
+            "dropout": {
+                "distribution": "uniform",
+                "min": 0.0,
+                "max": 0.5
+            },
+            "learning_rate": {
+                "distribution": "log_uniform_values",
+                "min": 0.001,
+                "max": 0.01
+            }
+        },
+        'MLP_ITER2': {
             "dropout": {
                 "distribution": "uniform",
                 "min": 0.0,
