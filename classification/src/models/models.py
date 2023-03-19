@@ -279,10 +279,10 @@ class MLP_MODEL_ITER2(nn.Module):
         super(MLP_MODEL_ITER2, self).__init__()
         input_size = 40
         self.hidden1 = nn.Linear(input_size, 512)
-        self.hidden2 = nn.Linear(256, 128)
-        self.hidden3 = nn.Linear(128, 64)
+        self.hidden2 = nn.Linear(512, 256)
+        self.hidden3 = nn.Linear(256, 128)
         self.dropout = nn.Dropout(model_cfg['dropout'])
-        self.output = nn.Linear(64, 3)
+        self.output = nn.Linear(128, 3)
         self.output_activation = torch.nn.Sigmoid()
 
         # def init_weights(m):
