@@ -5,13 +5,13 @@ import argparse
 import pandas as pd
 import torch.utils.data
 
-from config import cfg
-from models.models import get_model, load_model_from_checkpoint
-from utils.experimentation import partition_dataset, create_equal_folds, \
+from classification.src.config import cfg
+from classification.src.models.models import get_model, load_model_from_checkpoint
+from classification.src.utils.experimentation import partition_dataset, create_equal_folds, \
     compute_class_weights, flatten_dict, aggregate_predictions
-from utils.data_pipeline import convert_to_full_paths, load_and_concat
+from classification.src.utils.data_pipeline import convert_to_full_paths, load_and_concat
 from torchmetrics import MetricCollection, Accuracy, Precision, Recall, F1Score
-from constants import CALLBACKS
+from classification.src.constants import CALLBACKS
 
 from pytorch_lightning.trainer import Trainer
 from pytorch_lightning import seed_everything
