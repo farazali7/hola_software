@@ -52,6 +52,7 @@ cfg = {
     'WINDOW_OVERLAP_SIZE': 30,
     'COMBINE_CHANNELS': False,
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
+    'FEATURE_EXTRACTION_FUNC': 'feature_set_1',
 
     'MODEL_ARCHITECTURE': 'MLP_ITER2',
     'EXPERIMENT_TYPE': 'train',

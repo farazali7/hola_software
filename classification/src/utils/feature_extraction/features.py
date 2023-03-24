@@ -1,5 +1,7 @@
 import numpy as np
 import pywt
+from scipy.signal import spectrogram as sp_spectogram
+from sklearn.decomposition import PCA as sk_PCA
 
 
 def rms(data, axis=1):
@@ -41,3 +43,15 @@ def hjorth_complexity(data, var_data, var_axis=1, return_mobility=False):
     return complexity
 
 
+def spectogram(data, sampling_freq, window, nperseg, n_overlap, axis=-1):
+    f, t, Sxx = sp_spectogram(x=data, fs=sampling_freq, window=window, nperseg=nperseg, noverlap=n_overlap, axis=axis,
+                              mode='magnitude')
+
+    return f, t, Sxx
+
+
+def PCA(data, n_components):
+    pca = sk_PCA(n_components=n_components)
+    comps = pca.fit_transform(data)
+
+    return comps
