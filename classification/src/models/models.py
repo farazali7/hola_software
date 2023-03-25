@@ -256,14 +256,15 @@ class CNN(nn.Module):
     def __init__(self, model_cfg):
         super(CNN, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=5, out_channels=16, kernel_size=3)
-        self.hidden1 = nn.Linear(16, 256)
+        self.hidden1 = nn.Linear(144, 256)
         self.hidden2 = nn.Linear(256, 128)
         self.output = nn.Linear(128, 3)
         self.output_activation = torch.nn.Sigmoid()
         self.dropout = nn.Dropout(model_cfg['dropout'])
 
     def forward(self, x):
-        x = torch.reshape(x, (-1, 5))
+        x = torch.reshape(x, (x.shape[0], 5, 5, x.shape[-1]))
+        x = torch.permute(x, (0, 3, 2, 1))  # Set channels to dim 1
         x = self.conv1(x)
         x = torch.flatten(x, 1)
 

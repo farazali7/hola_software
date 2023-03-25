@@ -84,8 +84,6 @@ cfg = {
 
     'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
 
-    'FEATURES': ['rms', 'mav', 'var', 'mdwt'],
-
     'GLOBAL_SEED': 7,
 
     'HYPERPARAMETER_SEARCH': {
