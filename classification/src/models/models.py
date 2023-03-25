@@ -257,7 +257,9 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=5, out_channels=16, kernel_size=3)
         self.hidden1 = nn.Linear(144, 256)
+        self.bnorm1 = nn.BatchNorm1d(num_features=256)
         self.hidden2 = nn.Linear(256, 128)
+        self.bnorm2 = nn.BatchNorm1d(num_features=128)
         self.output = nn.Linear(128, 3)
         self.output_activation = torch.nn.Sigmoid()
         self.dropout = nn.Dropout(model_cfg['dropout'])
@@ -269,10 +271,12 @@ class CNN(nn.Module):
         x = torch.flatten(x, 1)
 
         x = self.hidden1(x)
+        x = self.bnorm1(x)
         x = F.relu(x)
         x = self.dropout(x)
 
         x = self.hidden2(x)
+        x = self.bnorm2(x)
         x = F.relu(x)
         x = self.dropout(x)
 
