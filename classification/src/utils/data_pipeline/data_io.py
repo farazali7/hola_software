@@ -14,7 +14,7 @@ def save_data(emg_data, grasp_labels, save_path):
     :param save_path: String, path to save new formatted data_pipeline file to
     :return:
     '''
-    combined_data = np.concatenate([emg_data, grasp_labels], axis=1)
+    combined_data = (emg_data, grasp_labels)
     with open(save_path, 'wb') as handle:
         pickle.dump(combined_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -28,7 +28,11 @@ def load_data(data_path):
     with open(data_path, 'rb') as f:
         data = pickle.load(f)
 
-    return data[:, :-1], data[:, -1:]
+    if isinstance(data, tuple):
+        x, y = data[0], data[1]
+    else:
+        x, y = data[:, :-1], data[:, -1:]
+    return x, y
 
 
 def convert_to_full_paths(file_names, base_path):

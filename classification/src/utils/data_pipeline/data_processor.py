@@ -139,13 +139,6 @@ if __name__ == '__main__':
                                'standardize': standardize,
                                'sampling_freq': target_freq}
 
-    process_data(subject_ids[0],
-                 data_dir=formatted_data_path,
-                 preprocessing_args=preprocessing_args,
-                 feature_extraction_func=feature_extraction_func,
-                 feature_extraction_args=feature_extraction_args,
-                 save_dir=save_dir)
-
     with Pool() as pool:
         res = list(tqdm(pool.imap(partial(process_data,
                                           data_dir=formatted_data_path,

@@ -5,7 +5,7 @@ cfg = {
         'NINAPRO_DB10': {
             'RAW_DATA_PATH': 'data/raw/ninapro_db10',
             'FORMATTED_DATA_PATH': 'data/formatted/iter2/ninapro_db10',
-            'PROCESSED_DATA_PATH': 'data/processed/iter2/ninapro_db10',
+            'PROCESSED_DATA_PATH': 'data/processed/iter3/ninapro_db10',
             'DATA_COL_NAME': 'emg',
             'LABEL_COL_NAME': 'regrasp',
             'HEALTHY_SUBJECTS': ['S010', 'S011', 'S012', 'S013', 'S014', 'S015', 'S016', 'S017', 'S018', 'S019', 'S020',
@@ -23,7 +23,7 @@ cfg = {
         'GRABMYO': {
             'RAW_DATA_PATH': 'data/raw/grabmyo/open_hand',
             'FORMATTED_DATA_PATH': 'data/formatted/iter2/grabmyo_openhand',
-            'PROCESSED_DATA_PATH': 'data/processed/iter2/grabmyo_openhand',
+            'PROCESSED_DATA_PATH': 'data/processed/iter3/grabmyo_openhand',
             'HEALTHY_SUBJECTS': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
                                  21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                  40, 41, 42, 43],
@@ -52,9 +52,9 @@ cfg = {
     'WINDOW_OVERLAP_SIZE': 30,
     'COMBINE_CHANNELS': False,
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
-    'FEATURE_EXTRACTION_FUNC': 'feature_set_1',
+    'FEATURE_EXTRACTION_FUNC': 'feature_set_2',
 
-    'MODEL_ARCHITECTURE': 'MLP_ITER2',
+    'MODEL_ARCHITECTURE': 'CNN',
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
@@ -110,6 +110,18 @@ cfg = {
             }
         },
         'MLP_ITER2': {
+            "dropout": {
+                "distribution": "uniform",
+                "min": 0.3,
+                "max": 0.5
+            },
+            "learning_rate": {
+                "distribution": "log_uniform_values",
+                "min": 0.001,
+                "max": 0.01
+            }
+        },
+        'CNN': {
             "dropout": {
                 "distribution": "uniform",
                 "min": 0.3,

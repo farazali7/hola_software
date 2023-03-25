@@ -14,11 +14,11 @@ def get_model(model_name, model_args, trainer_args):
     :return: Model
     """
     if model_name == 'MLP':
-        model_def = MLP_MODEL(model_args)
+        model_def = MLP(model_args)
     elif model_name == 'MLP_ITER2':
-        model_def = MLP_MODEL_ITER2(model_args)
+        model_def = MLP_ITER2(model_args)
     elif model_name == 'CNN':
-        model_def = CNN_MODEL(model_args)
+        model_def = CNN(model_args)
     else:
         raise Exception(f'Given model name: {model_name} is not supported.')
 
@@ -252,31 +252,38 @@ class LegacyModel(nn.Module):
         return res
 
 
-class CNN_MODEL(nn.Module):
+class CNN(nn.Module):
     def __init__(self, model_cfg):
-        super(CNN_MODEL, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=5, out_channels=32, kernel_size=5)
-        self.hidden1 = nn.Linear(20, 512)
-        self.hidden2 = nn.Linear(512, 256)
+        super(CNN, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=5, out_channels=16, kernel_size=3)
+        self.hidden1 = nn.Linear(16, 256)
+        self.hidden2 = nn.Linear(256, 128)
+        self.output = nn.Linear(128, 3)
+        self.output_activation = torch.nn.Sigmoid()
         self.dropout = nn.Dropout(model_cfg['dropout'])
-        self.output = nn.Linear(256, 1)
 
     def forward(self, x):
+        x = torch.reshape(x, (-1, 5))
         x = self.conv1(x)
         x = torch.flatten(x, 1)
+
         x = self.hidden1(x)
-        x = self.dropout(x)
         x = F.relu(x)
+        x = self.dropout(x)
+
         x = self.hidden2(x)
-        x = self.dropout(x)
         x = F.relu(x)
+        x = self.dropout(x)
 
-        return self.output(x)
+        x = self.output(x)
+        x = self.output_activation(x)
+
+        return x
 
 
-class MLP_MODEL_ITER2(nn.Module):
+class MLP_ITER2(nn.Module):
     def __init__(self, model_cfg):
-        super(MLP_MODEL_ITER2, self).__init__()
+        super(MLP_ITER2, self).__init__()
         input_size = 40
         self.hidden1 = nn.Linear(input_size, 512)
         self.hidden2 = nn.Linear(512, 256)
@@ -284,13 +291,6 @@ class MLP_MODEL_ITER2(nn.Module):
         self.dropout = nn.Dropout(model_cfg['dropout'])
         self.output = nn.Linear(128, 3)
         self.output_activation = torch.nn.Sigmoid()
-
-        # def init_weights(m):
-        #     if isinstance(m, nn.Linear):
-        #         torch.nn.init.xavier_uniform_(m.weight)
-        #         m.bias.data.fill_(0)
-        #
-        # self.apply(init_weights)
 
     def forward(self, x):
         x = torch.flatten(x, 1)
@@ -312,9 +312,9 @@ class MLP_MODEL_ITER2(nn.Module):
         return x
 
 
-class MLP_MODEL(nn.Module):
+class MLP(nn.Module):
     def __init__(self, model_cfg):
-        super(MLP_MODEL, self).__init__()
+        super(MLP, self).__init__()
         input_size = 5
         self.hidden1 = nn.Linear(input_size, 128)
         self.hidden2 = nn.Linear(128, 64)

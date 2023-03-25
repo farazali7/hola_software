@@ -80,17 +80,16 @@ def feature_set_2(data, labels, args):
     f, t, Sxx = spectogram(data=emg_windows, sampling_freq=sampling_freq, window=window, nperseg=20,
                            n_overlap=10, axis=1)
 
-    Sxx = np.transpose(Sxx, (2, 0, 1))
-    # Normalize to 0 to 1 range
-    ss = MinMaxScaler()
-    norm_Sxx = [ss.fit_transform(Sxx[:, :, i]) for i in range(Sxx.shape[-1])]
+    Sxx = np.transpose(Sxx, (0, 3, 1, 2))
 
-    # PCA
-    pcs = []
-    for ch_Sxx in norm_Sxx:
-        ch_pcs = PCA(ch_Sxx, n_components=25)
-        pcs.append(ch_pcs[1])
+    # Normalize to 0 to 1 range & PCA
+    n_components = 25
+    features = np.zeros(shape=(Sxx.shape[0], n_components, Sxx.shape[-1]))
+    for i in range(Sxx.shape[-1]):  # Per channel
+        ss = MinMaxScaler()
+        scalars = Sxx[:, :, :, i].reshape(Sxx.shape[0], Sxx.shape[1]*Sxx.shape[2])
+        scaled = ss.fit_transform(scalars)
+        ch_pcs = PCA(scaled, n_components=n_components)
+        features[:, :, i] = ch_pcs
 
-    pcs = np.stack(pcs).transpose((1, 0))
-
-    return pcs
+    return features, homog_label_windows
