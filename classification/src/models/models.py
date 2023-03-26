@@ -147,9 +147,9 @@ class Model(pl.LightningModule):
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": optim.lr_scheduler.ReduceLROnPlateau(optimizer),
-                "monitor": "val_loss",
+                "monitor": self.log_prefix+"val_loss",
                 "interval": "epoch",
-                "frequency": "1"
+                "frequency": 1
                 # If "monitor" references validation metrics, then "frequency" should be set to a
                 # multiple of "trainer.check_val_every_n_epoch".
             },

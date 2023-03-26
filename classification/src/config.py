@@ -41,11 +41,11 @@ cfg = {
     'SAVE_SPLITS_PATH': 'results/models',
 
     # Preprocessing args
-    'BUTTERWORTH_ORDER': 4,
-    'BUTTERWORTH_FREQ': [20, 125],
-    'NOTCH_FREQ': 60,
+    'BUTTERWORTH_ORDER': 2,
+    'BUTTERWORTH_FREQ': [20, 100],
+    'NOTCH_FREQ': 55,
     'QUALITY_FACTOR': 30.0,
-    'TARGET_FREQ': 250,  # Frequency expected in real-time acquisition
+    'TARGET_FREQ': 200,  # Frequency expected in real-time acquisition
 
     # Feature extraction args
     'WINDOW_SIZE': 52,
