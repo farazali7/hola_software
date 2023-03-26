@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-from classification.config import cfg
-from classification.src.utils.data_pipeline import load_data
+from classification.src.config import cfg
+from classification.src.utils.data_pipeline import load_data, load_and_concat, convert_to_full_paths
 
 
 def plot_signal(signal_data, time_vec=None, x_label='', y_label='', title=''):
@@ -105,32 +105,19 @@ if __name__ == '__main__':
     CHANNELS = [0]  # Just visualize one channel for now
 
     # Load samples from NinaPro DB10
-    data_path = 'data/formatted/ninapro_db10/'
     np_cfg = cfg['DATASETS']['NINAPRO_DB10']
-    np_ids = np_cfg['HEALTHY_SUBJECTS'] + np_cfg['AFFECTED_SUBJECTS']
+    np_processed_data_path = np_cfg['FORMATTED_DATA_PATH']
+    np_healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
+    np_healthy_subjects = convert_to_full_paths(np_healthy_subjects, np_processed_data_path)
+    np_affected_subjects = np_cfg['AFFECTED_SUBJECTS']
+    np_affected_subjects = convert_to_full_paths(np_affected_subjects, np_processed_data_path)
+    np_x, np_y = load_and_concat(np_healthy_subjects, ext='.pkl')
 
-    # Get Rest data
-    np_rest_data = get_batch_grasp_data(data_path, 0, np_ids, 0)
-    # Get TVG data
-    np_tvg_data = get_batch_grasp_data(data_path, 1, np_ids, 0)
-    # Get LP data
-    np_lp_data = get_batch_grasp_data(data_path, 2, np_ids, 0)
-
-    time_vec = None  # Will plot just samples for now
-
-    plot_batch_signal(np_rest_data, time_vec, x_label='Samples', y_label='EMG', title_base='NinaPro DB10 Rest')
-    plot_batch_signal(np_tvg_data, time_vec, x_label='Samples', y_label='EMG', title_base='NinaPro DB10 TVG')
-    plot_batch_signal(np_lp_data, time_vec, x_label='Samples', y_label='EMG', title_base='NinaPro DB10 LP')
-
-    # Load samples from GrabMyo
-    data_path = 'data/formatted/grabmyo_openhand/'
     gm_cfg = cfg['DATASETS']['GRABMYO']
-    gm_ids = gm_cfg['HEALTHY_SUBJECTS']
-    gm_ids_fmt = ['S'+str(i+115) for i in gm_ids]  # Reformat int ids to match NinaPro
+    gm_processed_data_path = gm_cfg['FORMATTED_DATA_PATH']
+    gm_healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
+    gm_healthy_subjects = ['S' + str(x + 115) for x in gm_healthy_subjects]
+    gm_healthy_subjects = convert_to_full_paths(gm_healthy_subjects, gm_processed_data_path)
+    gm_x, gm_y = load_and_concat(gm_healthy_subjects, ext='.pkl')
 
-    # Get OH data
-    gm_oh_data = get_batch_grasp_data(data_path, -1, gm_ids_fmt, 0)
-
-    time_vec = None  # Will plot just samples for now
-
-    plot_batch_signal(gm_oh_data, time_vec, x_label='Samples', y_label='EMG', title_base='GrabMyo OH')
+    print('Done')

@@ -97,8 +97,6 @@ def process_data(subject_id, data_dir, preprocessing_args, feature_extraction_fu
 
 
 if __name__ == '__main__':
-    base_save_dir = 'data/processed'
-
     # Preprocessing args
     butter_ord = cfg['BUTTERWORTH_ORDER']
     butter_freq = cfg['BUTTERWORTH_FREQ']

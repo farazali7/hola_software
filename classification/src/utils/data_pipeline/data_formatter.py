@@ -30,9 +30,15 @@ def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, grasp_i
     dynamic_state = data['redynamic']
     static_idxs = np.isin(dynamic_state, 0).ravel()
 
+    # Remove unreliable data as stated by Cognolato et. al 2020 (Ninapro DB10 paper)
+    bad_rep = data['reobjectrepetition']
+    bad_rep_idxs = np.isin(bad_rep, [-2, -3]).ravel()
+    good_rep_idxs = np.logical_not(bad_rep_idxs)
+
     # Get grasp label indices
     grasp_idxs = np.isin(data[label_col], grasp_ids).ravel()
     filter_idxs = np.logical_and(static_idxs, grasp_idxs)
+    filter_idxs = np.logical_and(filter_idxs, good_rep_idxs)
 
     # Apply filters and get relevant electrode channels
     emg_data = data[data_col][filter_idxs][:, electrode_ids]
@@ -90,9 +96,9 @@ def conditions_met(record):
     :record: String containing path to recrod
     :returns: Boolean indicating if record meets all conditions
     '''
-    session = 'session1'
+    sessions = ['session1', 'session2', 'session3']
     gesture = 'gesture15'  # Open hand
-    return session in record and gesture in record
+    return any(session in record for session in sessions) and gesture in record
 
 
 def organize_pn_records(record_list):
@@ -112,8 +118,6 @@ def organize_pn_records(record_list):
 
 
 if __name__ == '__main__':
-    base_save_dir = 'data/formatted/iter2'
-
     # NINAPRO DB10
     np_cfg = cfg['DATASETS']['NINAPRO_DB10']
     raw_data_path = np_cfg['RAW_DATA_PATH']
@@ -124,7 +128,7 @@ if __name__ == '__main__':
     label_col = np_cfg['LABEL_COL_NAME']
     grasp_ids = np_cfg['GRASP_LABELS']
     electrode_ids = np_cfg['ELECTRODE_IDS']
-    save_dir = os.path.join(base_save_dir, 'ninapro_db10')
+    save_dir = np_cfg['FORMATTED_DATA_PATH']
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -136,11 +140,11 @@ if __name__ == '__main__':
                      'electrode_ids': electrode_ids,
                      'save_dir': save_dir}
 
-    with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
-                        total=len(subject_ids)))
-
-    print('Done.')
+    # with Pool() as pool:
+    #     res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
+    #                     total=len(subject_ids)))
+    #
+    # print('Done.')
 
     # GRABMYO
     gm_cfg = cfg['DATASETS']['GRABMYO']
@@ -148,7 +152,7 @@ if __name__ == '__main__':
     healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
     subject_ids = healthy_subjects
     open_hand_label = gm_cfg['OPEN_HAND_LABEL']
-    save_dir = os.path.join(base_save_dir, 'grabmyo_openhand')
+    save_dir = gm_cfg['FORMATTED_DATA_PATH']
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -162,8 +166,8 @@ if __name__ == '__main__':
                      'new_label': open_hand_label,
                      'save_dir': save_dir}
 
-    # with Pool() as pool:
-    #     res = list(tqdm(pool.imap(partial(format_grabmyo_data, **format_params), records_by_subject.keys()),
-    #                     total=len(records_by_subject.keys())))
+    with Pool() as pool:
+        res = list(tqdm(pool.imap(partial(format_grabmyo_data, **format_params), records_by_subject.keys()),
+                        total=len(records_by_subject.keys())))
 
     print('Done.')
