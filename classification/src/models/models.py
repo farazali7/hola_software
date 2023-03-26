@@ -13,13 +13,11 @@ def get_model(model_name, model_args, trainer_args):
     :param trainer_args: Keyword arguments for model trainer such as learning rate, class weights, etc.
     :return: Model
     """
-    if model_name == 'MLP':
-        model_def = MLP(model_args)
-    elif model_name == 'MLP_ITER2':
-        model_def = MLP_ITER2(model_args)
-    elif model_name == 'CNN':
-        model_def = CNN(model_args)
-    else:
+    try:
+        model_fn = eval(model_name)
+        model_def = model_fn(model_args)
+    except Exception as e:
+        print(e)
         raise Exception(f'Given model name: {model_name} is not supported.')
 
     model = Model(model_def, **trainer_args)
@@ -145,8 +143,17 @@ class Model(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.model.parameters(), self.learning_rate)
-
-        return [optimizer]
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": optim.lr_scheduler.ReduceLROnPlateau(optimizer),
+                "monitor": "val_loss",
+                "interval": "epoch",
+                "frequency": "1"
+                # If "monitor" references validation metrics, then "frequency" should be set to a
+                # multiple of "trainer.check_val_every_n_epoch".
+            },
+        }
 
     def log_metrics(self, metrics_val_dict):
         """
@@ -250,6 +257,69 @@ class LegacyModel(nn.Module):
         print('\n')
 
         return res
+
+
+class CNN_ITER2(nn.Module):
+    def __init__(self, model_cfg):
+        super(CNN_ITER2, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 5))
+        self.bnorm1 = nn.BatchNorm2d(num_features=32)
+        self.pool1 = nn.MaxPool2d(kernel_size=(1, 3))
+        self.prelu1 = nn.PReLU(32)
+        self.dropout1 = nn.Dropout2d(model_cfg['dropout'])
+
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=(2, 5))
+        self.pool2 = nn.MaxPool2d(kernel_size=(1, 3))
+        self.bnorm2 = nn.BatchNorm2d(64)
+        self.prelu2 = nn.PReLU(64)
+        self.dropout2 = nn.Dropout2d(model_cfg['dropout'])
+
+        self.fc1 = nn.Linear(768, 500)
+        self.bnorm3 = nn.BatchNorm1d(500)
+        self.prelu3 = nn.PReLU(500)
+        self.dropout3 = nn.Dropout(model_cfg['dropout'])
+
+        self.output = nn.Linear(500, 3)
+        self.output_activation = torch.nn.Sigmoid()
+
+        self.initialize_weights()
+
+    def initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                torch.nn.init.kaiming_normal_(m.weight)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                torch.nn.init.kaiming_normal_(m.weight)
+                m.bias.data.zero_()
+
+    def forward(self, x):
+        x = torch.permute(x, (0, 2, 1))  # Set electrode channels to rows dim (1)
+        x = torch.unsqueeze(x, 1)  # Singular channel image
+        x = self.conv1(x)
+        x = self.bnorm1(x)
+        x = self.prelu1(x)
+        x = self.dropout1(x)
+        x = self.pool1(x)
+
+        x = self.conv2(x)
+        x = self.bnorm2(x)
+        x = self.prelu2(x)
+        x = self.dropout2(x)
+        x = self.pool2(x)
+
+        # Flatten
+        x = x.view(-1, 768)
+
+        x = self.fc1(x)
+        x = self.bnorm3(x)
+        x = self.prelu3(x)
+        x = self.dropout3(x)
+
+        x = self.output(x)
+        x = self.output_activation(x)
+
+        return x
 
 
 class CNN(nn.Module):

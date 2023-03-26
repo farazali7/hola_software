@@ -271,7 +271,7 @@ def perform_experiment():
     seed_everything(cfg['GLOBAL_SEED'])
 
     wandb_entity = cfg['WANDB']['ENTITY']
-    wandb_project = cfg['WANDB']['PROJECT']
+    wandb_project = 'HOLA_TESTING'
 
     # Ninapro DB10 data
     np_cfg = cfg['DATASETS']['NINAPRO_DB10']

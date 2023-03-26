@@ -93,3 +93,31 @@ def feature_set_2(data, labels, args):
         features[:, :, i] = ch_pcs
 
     return features, homog_label_windows
+
+
+def feature_set_3(data, labels, args):
+    """
+    Compute raw EMG windows.
+    :param data: Array of EMG data
+    :param labels: Array of respective grasps labels to EMG data
+    :param args: Dictionary of arguments such as window_size, window_overlap_size, etc.
+    :return: Tuple of features and processed labels
+    """
+    window_size = args['window_size']
+    window_overlap_size = args['window_overlap_size']
+
+    emg_windows = window_data(data, window_size, window_overlap_size)
+    grasp_labels_windows = window_data(labels, window_size, window_overlap_size)
+
+    # Assign grasp label windows to mode label
+    homog_label_windows = homogenize_window(grasp_labels_windows)
+
+    # Normalize each channel
+    ss = MinMaxScaler()
+    features = np.zeros_like(emg_windows)
+    for i in range(emg_windows.shape[0]):
+        window = emg_windows[i, :, :]
+        norm_window = ss.fit_transform(window)
+        features[i, :, :] = norm_window
+
+    return features, homog_label_windows
