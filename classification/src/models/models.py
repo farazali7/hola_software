@@ -259,6 +259,112 @@ class LegacyModel(nn.Module):
         return res
 
 
+class CNN_ITER3(nn.Module):
+    def __init__(self, model_cfg):
+        super(CNN_ITER3, self).__init__()
+
+        self._input_batch_norm = nn.BatchNorm2d(4, eps=1e-4)
+        self._input_prelu = nn.PReLU(4)
+
+        self._list_conv1_first_part = []
+        self._list_conv2_first_part = []
+        self._first_part_dropout1 = []
+        self._first_part_dropout2 = []
+        self._first_part_relu1 = []
+        self._first_part_relu2 = []
+        self._first_part_batchnorm1 = []
+        self._first_part_batchnorm2 = []
+        for i in range(2):
+            self._list_conv1_first_part.append(nn.Conv2d(2, 12, kernel_size=(4, 3)))
+            self._list_conv2_first_part.append(nn.Conv2d(12, 12, kernel_size=(1, 3)))
+
+            self._first_part_dropout1.append(nn.Dropout2d(model_cfg['dropout']))
+            self._first_part_dropout2.append(nn.Dropout2d(model_cfg['dropout']))
+
+            self._first_part_relu1.append(nn.PReLU(12))
+            self._first_part_relu2.append(nn.PReLU(12))
+
+            self._first_part_batchnorm1.append(nn.BatchNorm2d(12, eps=1e-4))
+            self._first_part_batchnorm2.append(nn.BatchNorm2d(12, eps=1e-4))
+
+        self._list_conv1_first_part = nn.ModuleList(self._list_conv1_first_part)
+        self._list_conv2_first_part = nn.ModuleList(self._list_conv2_first_part)
+        self._first_part_dropout1 = nn.ModuleList(self._first_part_dropout1)
+        self._first_part_dropout2 = nn.ModuleList(self._first_part_dropout2)
+        self._first_part_relu1 = nn.ModuleList(self._first_part_relu1)
+        self._first_part_relu2 = nn.ModuleList(self._first_part_relu2)
+        self._first_part_batchnorm1 = nn.ModuleList(self._first_part_batchnorm1)
+        self._first_part_batchnorm2 = nn.ModuleList(self._first_part_batchnorm2)
+
+        self._conv3 = nn.Conv2d(12, 24, kernel_size=(2, 3))
+        self._batch_norm_3 = nn.BatchNorm2d(24, eps=1e-4)
+        self._prelu_3 = nn.PReLU(24)
+        self._dropout3 = nn.Dropout2d(model_cfg['dropout'])
+
+        self._fc1 = nn.Linear(96, 100)
+        self._batch_norm_fc1 = nn.BatchNorm1d(100, eps=1e-4)
+        self._prelu_fc1 = nn.PReLU(100)
+        self._dropout_fc1 = nn.Dropout(model_cfg['dropout'])
+
+        self._fc2 = nn.Linear(100, 100)
+        self._batch_norm_fc2 = nn.BatchNorm1d(100, eps=1e-4)
+        self._prelu_fc2 = nn.PReLU(100)
+        self._dropout_fc2 = nn.Dropout(model_cfg['dropout'])
+
+        self._output = nn.Linear(100, 3)
+
+        self._output_activation = nn.Sigmoid()
+
+        self.initialize_weights()
+
+    def initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                torch.nn.init.kaiming_normal_(m.weight)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                torch.nn.init.kaiming_normal_(m.weight)
+                m.bias.data.zero_()
+
+    def forward(self, x):
+        x = self._input_batch_norm(x)
+        x = self._input_prelu(x)
+
+        input_1 = x[:, :2, :, :]
+        input_2 = x[:, 2:, :, :]
+
+        first_branch = self.first_parallel(input_1, 0)
+        second_branch = self.first_parallel(input_2, 1)
+
+        first_merge_1 = first_branch + second_branch
+
+        after_conv = self._dropout3(self._prelu_3(self._batch_norm_3(self._conv3(first_merge_1))))
+
+        flatten_tensor = after_conv.view(-1, 96)
+
+        fc1_output = self._dropout_fc1(self._prelu_fc1(self._batch_norm_fc1(self._fc1(flatten_tensor))))
+
+        fc2_output = self._dropout_fc2(self._prelu_fc2(self._batch_norm_fc2(self._fc2(fc1_output))))
+
+        out = self._output(fc2_output)
+        out = self._output_activation(out)
+
+        return out
+
+    def first_parallel(self, input_to_give, index):
+        conv1_first_part1 = self._list_conv1_first_part[index](input_to_give)
+        batch_norm1_first_part1 = self._first_part_batchnorm1[index](conv1_first_part1)
+        prelu1_first_part1 = self._first_part_relu1[index](batch_norm1_first_part1)
+        dropout1_first_part1 = self._first_part_dropout1[index](prelu1_first_part1)
+
+        conv1_first_part2 = self._list_conv2_first_part[index](dropout1_first_part1)
+        batch_norm1_first_part2 = self._first_part_batchnorm2[index](conv1_first_part2)
+        prelu1_first_part2 = self._first_part_relu2[index](batch_norm1_first_part2)
+        dropout1_first_part2 = self._first_part_dropout2[index](prelu1_first_part2)
+
+        return dropout1_first_part2
+
+
 class CNN_ITER2(nn.Module):
     def __init__(self, model_cfg):
         super(CNN_ITER2, self).__init__()

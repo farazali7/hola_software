@@ -121,3 +121,41 @@ def feature_set_3(data, labels, args):
         features[i, :, :] = norm_window
 
     return features, homog_label_windows
+
+
+def feature_set_4(data, labels, args):
+    """
+    Compute spectogram EMG windows of time step x electrode channel x frequency.
+    :param data: Array of EMG data
+    :param labels: Array of respective grasps labels to EMG data
+    :param args: Dictionary of arguments such as window_size, window_overlap_size, etc.
+    :return: Tuple of features and processed labels
+    """
+    window_size = args['window_size']
+    window_overlap_size = args['window_overlap_size']
+    sampling_freq = args['sampling_freq']
+
+    emg_windows = window_data(data, window_size, window_overlap_size)
+    grasp_labels_windows = window_data(labels, window_size, window_overlap_size)
+
+    # Assign grasp label windows to mode label
+    homog_label_windows = homogenize_window(grasp_labels_windows)
+
+    # Apply hamming window and get spectogram
+    window = 'hamming'
+    f, t, Sxx = spectogram(data=emg_windows, sampling_freq=sampling_freq, window=window, nperseg=20,
+                           n_overlap=10, axis=1)
+
+    Sxx = np.transpose(Sxx, (0, 3, 2, 1))
+    Sxx = Sxx[:, :, :, 1:]  # Ignore 0th frequency
+
+    # Normalize to 0 to 1 range
+    features = np.zeros_like(Sxx)
+    for i in range(Sxx.shape[2]):  # Per channel
+        ss = MinMaxScaler()
+        scalars = Sxx[:, :, i, :].reshape(Sxx.shape[0], Sxx.shape[1]*Sxx.shape[3])
+        scaled = ss.fit_transform(scalars)
+        scaled = scaled.reshape(Sxx.shape[0], Sxx.shape[1], Sxx.shape[3])
+        features[:, :, i, :] = scaled
+
+    return features, homog_label_windows

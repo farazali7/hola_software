@@ -161,13 +161,19 @@ if __name__ == '__main__':
     filtered_records = set([record.split('\n')[0] for record in records if conditions_met(record)])
     records_by_subject = organize_pn_records(filtered_records)
 
+    already = [int(f[1:4])-115 for f in os.listdir(save_dir)]
+    remain = {}
+    for r in records_by_subject:
+        if r not in already:
+            remain[r] = records_by_subject[r]
+
     format_params = {'electrode_ids': electrode_ids,
-                     'all_records': records_by_subject,
+                     'all_records': remain,
                      'new_label': open_hand_label,
                      'save_dir': save_dir}
 
     with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(format_grabmyo_data, **format_params), records_by_subject.keys()),
-                        total=len(records_by_subject.keys())))
+        res = list(tqdm(pool.imap(partial(format_grabmyo_data, **format_params), remain.keys()),
+                        total=len(remain.keys())))
 
     print('Done.')
