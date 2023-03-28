@@ -39,10 +39,6 @@ def preprocess_data(emg_data, grasp_labels, butter_ord, butter_freq, notch_freq,
         last_dim = resampled_data.shape[1] - 1
         emg_data, grasp_labels = resampled_data[:, :last_dim], resampled_data[:, last_dim:]
 
-    # Assign non-TVG, non-LP labels to rest class (i.e., make a 'catch-all' class)
-    if from_np:
-        grasp_labels = np.where(grasp_labels > 2, 0, grasp_labels)
-
     grasp_labels = grasp_labels.astype(int)
 
     if save_path:
