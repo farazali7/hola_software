@@ -58,6 +58,44 @@ def format_grabmyo_data(subject_id, all_records, electrode_ids, grasp_ids, save_
     :param subject_id: Int, subject number specified by database file naming for specific subject
     :param all_records: Dictionary specifying PhysioNet records for subjects (not unique here for multiprocessing)
     :param electrode_ids: Array of ints representing IDs for electrode channels
+    :param new_label: Int specifying what number to assign to open hand labels
+    :param save_dir: String, path to directory to save the data in
+    :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
+    '''
+    subject_records = all_records[subject_id]
+    data = []
+    for record in subject_records:
+        folder, record_file = record.rsplit('/', 1)
+        signal, md = wfdb.rdsamp(record_file, pn_dir='grabmyo/' + folder)
+        data.append(signal)
+
+    data = np.array(data)
+    data = data.reshape(-1, data.shape[-1])
+
+    # Convert monopolar electrodes to bipolar by subtracting
+    bipolar_data = []
+    for channel_pair in electrode_ids:
+        channels = data[:, channel_pair]
+        differential = channels[:, 0] - channels[:, 1]  #
+        bipolar_data.append(differential)
+    bipolar_data = np.transpose(np.array(bipolar_data))
+    grasp_labels = np.full(bipolar_data.shape[0], grasp_ids['OH'])[..., np.newaxis]
+
+    subject_id += 115  # Offset from subjects in NinaProDB10
+
+    if save_dir:
+        save_path = os.path.join(save_dir, 'S' + str(subject_id) + '.pkl')
+        save_data(bipolar_data, grasp_labels, save_path)
+
+    return bipolar_data, grasp_labels
+
+def format_grabmyo_data_all(subject_id, all_records, electrode_ids, grasp_ids, save_dir=None):
+    '''
+    Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
+    dataset.
+    :param subject_id: Int, subject number specified by database file naming for specific subject
+    :param all_records: Dictionary specifying PhysioNet records for subjects (not unique here for multiprocessing)
+    :param electrode_ids: Array of ints representing IDs for electrode channels
     :param grasp_ids: Dict of int specifying what number to assign to new labels
     :param save_dir: String, path to directory to save the data in
     :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
@@ -118,7 +156,7 @@ def conditions_met(record):
     oh = 'gesture15'
     tvg = 'gesture16'
     lp = 'gesture1_'
-    gestures = [oh, tvg, lp]
+    gestures = [oh]
     return any(session in record for session in sessions) and any(gesture in record for gesture in gestures)
 
 
@@ -161,11 +199,11 @@ if __name__ == '__main__':
                      'electrode_ids': electrode_ids,
                      'save_dir': save_dir}
 
-    # with Pool() as pool:
-    #     res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
-    #                     total=len(subject_ids)))
-    #
-    # print('Done.')
+    with Pool() as pool:
+        res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
+                        total=len(subject_ids)))
+
+    print('Done.')
 
     # GRABMYO
     gm_cfg = cfg['DATASETS']['GRABMYO']

@@ -441,7 +441,7 @@ class CNN(nn.Module):
         self.dropout = nn.Dropout(model_cfg['dropout'])
 
     def forward(self, x):
-        x = torch.reshape(x, (x.shape[0], 5, 5, x.shape[-1]))
+        # x = torch.reshape(x, (x.shape[0], 5, 5, x.shape[-1]))
         x = torch.permute(x, (0, 3, 2, 1))  # Set channels to dim 1
         x = self.conv1(x)
         x = torch.flatten(x, 1)
