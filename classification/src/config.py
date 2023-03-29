@@ -66,6 +66,14 @@ cfg = {
     'SHUFFLE': True,
     'NUM_WORKERS': os.cpu_count(),
 
+    # Data partitioning args
+    'CV_FOLDS': 5,
+    'TEST_SET_PERCENTAGE': 0.2,
+
+    'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
+
+    'GLOBAL_SEED': 7,
+
     'CALLBACKS': {
         # 'EARLY_STOPPING': {
         #     'monitor': 'val_Macro F1-Score',
@@ -79,14 +87,6 @@ cfg = {
             'auto_insert_metric_name': True
         }
     },
-
-    # Data partitioning args
-    'CV_FOLDS': 5,
-    'TEST_SET_PERCENTAGE': 0.2,
-
-    'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
-
-    'GLOBAL_SEED': 7,
 
     'HYPERPARAMETER_SEARCH': {
         'SWEEP_SETTINGS': {

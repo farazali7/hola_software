@@ -190,11 +190,14 @@ class BatchwiseTrainModel(Model):
                 batch_norm_dict.update({key: state_dict[key]})
         self.default_bn_weights = deepcopy(batch_norm_dict)
 
+        self.current_subject_batch = 0  # Initialize
+
     def training_step(self, batch, batch_idx):
         x, y = batch
 
         # Load subject-specific batch-norm weights
         subject_num = int(torch.unique(x[..., -1]))
+        self.current_subject_batch = subject_num
         if subject_num in self.bn_weights_by_subject:
             bn_weights = self.bn_weights_by_subject[subject_num]
         else:
@@ -217,15 +220,19 @@ class BatchwiseTrainModel(Model):
         self.log_metrics(train_metrics_out)
         self.log(self.log_prefix + 'train_loss', loss, prog_bar=True)
 
+        return res
+
+    def optimizer_step(self, *args, **kwargs):
+        super().optimizer_step(*args, **kwargs)
+        # do something on_after_optimizer_step
         # Save batch-norm stats for this subject
         state_dict = self.model.state_dict()
         batch_norm_dict = {}
         for key in state_dict:
             if "bnorm" in key:
                 batch_norm_dict.update({key: state_dict[key]})
-        self.bn_weights_by_subject[subject_num] = deepcopy(batch_norm_dict)
+        self.bn_weights_by_subject[self.current_subject_batch] = deepcopy(batch_norm_dict)
 
-        return res
 
 
 class LegacyModel(nn.Module):
