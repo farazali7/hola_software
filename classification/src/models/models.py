@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import pytorch_lightning as pl
+from copy import deepcopy
 
 
 def get_model(model_name, model_args, trainer_args):
@@ -20,7 +21,10 @@ def get_model(model_name, model_args, trainer_args):
         print(e)
         raise Exception(f'Given model name: {model_name} is not supported.')
 
-    model = Model(model_def, **trainer_args)
+    if model_name == 'CNN_ITER4':
+        model = BatchwiseTrainModel(model_def, **trainer_args)
+    else:
+        model = Model(model_def, **trainer_args)
 
     return model
 
@@ -47,7 +51,7 @@ class Model(pl.LightningModule):
         self.val_metrics = metrics.clone(prefix='val_')
         self.test_metrics = metrics.clone(prefix='test_')
         self.fold = fold
-        self.log_prefix = 'fold_'+str(self.fold)+'/'
+        self.log_prefix = 'fold_' + str(self.fold) + '/'
 
         self.train_step_outputs = []
         self.val_step_outputs = []
@@ -69,7 +73,7 @@ class Model(pl.LightningModule):
 
         train_metrics_out = self.train_metrics(preds, targets)
         self.log_metrics(train_metrics_out)
-        self.log(self.log_prefix+'train_loss', loss, prog_bar=True)
+        self.log(self.log_prefix + 'train_loss', loss, prog_bar=True)
 
         return res
 
@@ -80,7 +84,7 @@ class Model(pl.LightningModule):
 
         step_losses = [step_item['loss'] for step_item in self.train_step_outputs]
         epoch_loss = torch.stack(step_losses).mean()
-        self.log(self.log_prefix+'epoch_train_loss', epoch_loss)
+        self.log(self.log_prefix + 'epoch_train_loss', epoch_loss)
         self.train_step_outputs.clear()  # free memory
 
     def validation_step(self, batch, batch_idx):
@@ -96,7 +100,7 @@ class Model(pl.LightningModule):
         self.val_step_outputs.append(res)
 
         self.val_metrics.update(preds, targets)
-        self.log(self.log_prefix+'val_loss', val_loss, prog_bar=True)
+        self.log(self.log_prefix + 'val_loss', val_loss, prog_bar=True)
 
         return res
 
@@ -107,7 +111,7 @@ class Model(pl.LightningModule):
 
         step_losses = [step_item['val_loss'] for step_item in self.val_step_outputs]
         epoch_loss = torch.stack(step_losses).mean()
-        self.log(self.log_prefix+'epoch_val_loss', epoch_loss)
+        self.log(self.log_prefix + 'epoch_val_loss', epoch_loss)
         self.val_step_outputs.clear()  # free memory
 
     def test_step(self, batch, batch_idx):
@@ -147,7 +151,7 @@ class Model(pl.LightningModule):
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": optim.lr_scheduler.ReduceLROnPlateau(optimizer),
-                "monitor": self.log_prefix+"val_loss",
+                "monitor": self.log_prefix + "val_loss",
                 "interval": "epoch",
                 "frequency": 1
                 # If "monitor" references validation metrics, then "frequency" should be set to a
@@ -164,14 +168,64 @@ class Model(pl.LightningModule):
         scalar_dict = {}
         for metric_name in metrics_val_dict:
             metric_tensor = metrics_val_dict[metric_name]
-            new_name = self.log_prefix+metric_name
+            new_name = self.log_prefix + metric_name
             if metric_tensor.ndim == 0:  # Scalar
                 scalar_dict[new_name] = metric_tensor
             else:
                 for i, cls in enumerate(self.classes):
-                    scalar_dict[new_name+'_'+cls] = metric_tensor[i]
+                    scalar_dict[new_name + '_' + cls] = metric_tensor[i]
 
         self.log_dict(scalar_dict)
+
+
+class BatchwiseTrainModel(Model):
+    def __init__(self, *args, **kwargs):
+        super(BatchwiseTrainModel, self).__init__(*args, **kwargs)
+
+        self.bn_weights_by_subject = {}
+        state_dict = self.model.state_dict()
+        batch_norm_dict = {}
+        for key in state_dict:
+            if "bnorm" in key:
+                batch_norm_dict.update({key: state_dict[key]})
+        self.default_bn_weights = deepcopy(batch_norm_dict)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+
+        # Load subject-specific batch-norm weights
+        subject_num = int(torch.unique(x[..., -1]))
+        if subject_num in self.bn_weights_by_subject:
+            bn_weights = self.bn_weights_by_subject[subject_num]
+        else:
+            bn_weights = deepcopy(self.default_bn_weights)
+
+        self.model.load_state_dict(bn_weights, strict=False)
+
+        x = x[..., :-1]
+        outputs = self.model(x)
+        targets = torch.squeeze(y)
+        loss = nn.CrossEntropyLoss(weight=self.class_weights)(outputs, targets)
+
+        _, preds = torch.max(outputs.detach(), 1)
+
+        # Log and accumulate
+        res = {'loss': loss, 'preds': preds, 'targets': targets}
+        self.train_step_outputs.append(res)
+
+        train_metrics_out = self.train_metrics(preds, targets)
+        self.log_metrics(train_metrics_out)
+        self.log(self.log_prefix + 'train_loss', loss, prog_bar=True)
+
+        # Save batch-norm stats for this subject
+        state_dict = self.model.state_dict()
+        batch_norm_dict = {}
+        for key in state_dict:
+            if "bnorm" in key:
+                batch_norm_dict.update({key: state_dict[key]})
+        self.bn_weights_by_subject[subject_num] = deepcopy(batch_norm_dict)
+
+        return res
 
 
 class LegacyModel(nn.Module):
@@ -220,7 +274,7 @@ class LegacyModel(nn.Module):
                 _, predictions = torch.max(torch.nn.Softmax(dim=1)(outputs), 1)
                 correct += predictions.eq(targets.view_as(predictions)).sum()
 
-        test_loss = total_loss/len(test_loader)
+        test_loss = total_loss / len(test_loader)
 
         test_percent_acc = 100. * correct / len(test_loader.dataset)
         print('Test loss: {:.6f}, Test accuracy: {}/{} ({:.1f}%)\n'.format(
@@ -257,6 +311,43 @@ class LegacyModel(nn.Module):
         print('\n')
 
         return res
+
+
+class CNN_ITER4(nn.Module):
+    def __init__(self, model_cfg):
+        super(CNN_ITER4, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=5, out_channels=16, kernel_size=3)
+        self.bnormconv = nn.BatchNorm2d(num_features=16)
+        self.hidden1 = nn.Linear(144, 256)
+        self.bnorm1 = nn.BatchNorm1d(num_features=256)
+        self.hidden2 = nn.Linear(256, 128)
+        self.bnorm2 = nn.BatchNorm1d(num_features=128)
+        self.output = nn.Linear(128, 3)
+        self.output_activation = torch.nn.Sigmoid()
+        self.dropout = nn.Dropout(model_cfg['dropout'])
+
+    def forward(self, x):
+        # x = torch.reshape(x, (x.shape[0], 5, 5, x.shape[-1]))
+        x = torch.permute(x, (0, 3, 2, 1))  # Set channels to dim 1
+        x = self.conv1(x)
+        x = self.bnormconv(x)
+        x = F.relu(x)
+        x = torch.flatten(x, 1)
+
+        x = self.hidden1(x)
+        x = self.bnorm1(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+
+        x = self.hidden2(x)
+        x = self.bnorm2(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+
+        x = self.output(x)
+        x = self.output_activation(x)
+
+        return x
 
 
 class CNN_ITER3(nn.Module):

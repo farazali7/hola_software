@@ -56,7 +56,7 @@ cfg = {
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
     'FEATURE_EXTRACTION_FUNC': 'feature_set_5',
 
-    'MODEL_ARCHITECTURE': 'CNN',
+    'MODEL_ARCHITECTURE': 'CNN_ITER4',
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
@@ -82,7 +82,7 @@ cfg = {
 
     # Data partitioning args
     'CV_FOLDS': 5,
-    'TEST_SET_PERCENTAGE': 0.1,
+    'TEST_SET_PERCENTAGE': 0.2,
 
     'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
 
@@ -146,6 +146,18 @@ cfg = {
             }
         },
         'CNN_ITER3': {
+            "dropout": {
+                "distribution": "uniform",
+                "min": 0.3,
+                "max": 0.5
+            },
+            "learning_rate": {
+                "distribution": "log_uniform_values",
+                "min": 0.001,
+                "max": 0.01
+            }
+        },
+        'CNN_ITER4': {
             "dropout": {
                 "distribution": "uniform",
                 "min": 0.3,
