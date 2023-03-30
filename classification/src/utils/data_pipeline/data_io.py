@@ -64,7 +64,7 @@ def load_and_concat(file_names, ext=None, include_uid=False):
             X = np.concatenate([X, uid], axis=-1)
 
         all_x.append(X)
-        all_y.append(y)
+        all_y.append(y-1)  #TODO: REMOVE -1
 
     all_x = np.concatenate(all_x)
     all_y = np.concatenate(all_y).astype(np.int8)
