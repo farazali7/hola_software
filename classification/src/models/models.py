@@ -236,7 +236,6 @@ class BatchwiseTrainModel(Model):
         self.bn_weights_by_subject[self.current_subject_batch] = deepcopy(batch_norm_dict)
 
 
-
 class LegacyModel(nn.Module):
     def __init__(self, learning_rate, class_weights=None, metrics=None):
         super(LegacyModel, self).__init__()

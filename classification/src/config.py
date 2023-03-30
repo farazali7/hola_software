@@ -56,7 +56,7 @@ cfg = {
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
     'FEATURE_EXTRACTION_FUNC': 'feature_set_6',
 
-    'MODEL_ARCHITECTURE': 'CNN_ITER4',
+    'MODEL_ARCHITECTURE': 'CNN',
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
