@@ -63,18 +63,10 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
             end = subject_data_bounds[i + 1] if i + 1 < len(subject_data_bounds) else len(train_data)
             subject_data_idxs[i] = [i for i in range(start, end)]
 
-        # segregated_datasets = [(train_data[subject_data_idxs[i]], train_labels[subject_data_idxs[i]])
-        #                        for i in range(len(subject_data_idxs))]
-        # combined_dataset = CombinationDataset(segregated_datasets)
         sampler = ComboBatchSampler(
             [torch.utils.data.sampler.SubsetRandomSampler(sdi) for sdi in subject_data_idxs],
             batch_size=train_data_loader_args['batch_size'], drop_last=False)
 
-        # sampler = CustomBatchSampler(samplers=[torch.utils.data.sampler.SubsetRandomSampler(sdi) for sdi in subject_data_idxs],
-        #                              batch_size=train_data_loader_args['batch_size'], drop_last=False)
-
-        # subset_sampler = torch.utils.data.SubsetRandomSampler(indices=subject_data_bounds)
-        # batch_sampler = torch.utils.data.BatchSampler(subset_sampler, batch_size=)
         train_data_loader_args['batch_sampler'] = sampler
         train_data_loader_args.pop('batch_size')
         train_data_loader_args.pop('shuffle')
@@ -98,7 +90,7 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
     trainer_args['class_weights'] = class_weights
 
     # Get model
-    model = get_model(model_def, model_args, trainer_args)
+    model = get_model(model_def, model_args, trainer_args, batch_specific_train=batch_specific_train)
 
     # Callbacks
     callbacks = define_callbacks(callback_args)
@@ -147,7 +139,8 @@ def cross_val(data, model_def, training_params, num_folds, logger, save_dir=None
 
         print('LOADING TRAINING AND VALIDATION DATA...')
         # Load all participant training data
-        all_train_x, all_train_y = load_and_concat(train_ids, ext='.pkl', include_uid=training_params['batch_specific_train'])
+        all_train_x, all_train_y = load_and_concat(train_ids, ext='.pkl',
+                                                   include_uid=training_params['batch_specific_train'])
 
         # Get validation fold
         val_ids = folds[idx]
@@ -257,7 +250,7 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
                            'data_loader_args': data_loader_args,
                            'callback_args': callback_args,
                            'num_epochs': num_epochs,
-                           'batch_specific_train': True}
+                           'batch_specific_train': False}
 
         model_score, model_path = train_single(train_set=train_set,
                                                model_def=model_def,

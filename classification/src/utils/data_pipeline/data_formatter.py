@@ -43,6 +43,8 @@ def format_ninapro_db10_data(subject_id, data_path, data_col, label_col, grasp_i
     # Apply filters and get relevant electrode channels
     emg_data = data[data_col][filter_idxs][:, electrode_ids]
     grasp_labels = data[label_col][filter_idxs]
+    reps = data['regrasprepetition'][filter_idxs]-1  # Zero-indexed
+    emg_data = np.concatenate([emg_data, reps], axis=-1)
 
     if save_dir:
         save_path = os.path.join(save_dir, subject_id + '.pkl')
@@ -70,15 +72,27 @@ def format_grabmyo_data(subject_id, all_records, electrode_ids, grasp_ids, save_
         data.append(signal)
 
     data = np.array(data)
-    data = data.reshape(-1, data.shape[-1])
 
     # Convert monopolar electrodes to bipolar by subtracting
     bipolar_data = []
-    for channel_pair in electrode_ids:
-        channels = data[:, channel_pair]
-        differential = channels[:, 0] - channels[:, 1]  #
-        bipolar_data.append(differential)
-    bipolar_data = np.transpose(np.array(bipolar_data))
+    for trial in data:
+        bipolar_trial_data = []
+        for channel_pair in electrode_ids:
+            channels = trial[:, channel_pair]
+            differential = channels[:, 0] - channels[:, 1]
+            bipolar_trial_data.append(differential)
+        bipolar_data.append(bipolar_trial_data)
+
+    bipolar_data = np.array(bipolar_data)
+
+    # Add trial idx to last channel dim
+    trial_wise_arrs = []
+    for idx, trial in enumerate(bipolar_data):
+        trial_idx = np.full(shape=(1, trial.shape[-1]), fill_value=idx)
+        trial_data = np.transpose(np.concatenate([trial, trial_idx], axis=0))
+        trial_wise_arrs.append(trial_data)
+
+    bipolar_data = np.vstack(trial_wise_arrs)
     grasp_labels = np.full(bipolar_data.shape[0], grasp_ids['OH'])[..., np.newaxis]
 
     subject_id += 115  # Offset from subjects in NinaProDB10
@@ -198,6 +212,8 @@ if __name__ == '__main__':
                      'grasp_ids': grasp_ids,
                      'electrode_ids': electrode_ids,
                      'save_dir': save_dir}
+
+    format_ninapro_db10_data(subject_ids[0], **format_params)
 
     with Pool() as pool:
         res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),

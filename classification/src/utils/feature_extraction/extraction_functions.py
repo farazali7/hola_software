@@ -160,6 +160,7 @@ def feature_set_4(data, labels, args):
 
     return features, homog_label_windows
 
+
 def feature_set_5(data, labels, args):
     """
     Compute top PCs from spectrogram with Hamming window applied and reshape with most important PCs in middle.
@@ -209,3 +210,34 @@ def feature_set_5(data, labels, args):
         features[:, :, i] = spiral_ch_pcs
 
     return features, homog_label_windows
+
+
+def feature_set_6(data, labels, args):
+    """
+    Compute top PCs from spectrogram with Hamming window and reshape with most important PCs in middle, TRIAL-WISE
+    :param data: Array of EMG data
+    :param labels: Array of respective grasps labels to EMG data
+    :param args: Dictionary of arguments such as window_size, window_overlap_size, etc.
+    :return: Tuple of features and processed labels
+    """
+    trial_nums = np.unique(data[..., -1])
+
+    all_features = []
+    all_labels = []
+    for trial_num in trial_nums:
+        indices = np.where(data[..., -1] == trial_num)[0]
+        trial_data = data[indices, :-1]
+        trial_labels = labels[indices]
+
+        trial_features, trial_labels_proc = feature_set_5(trial_data, trial_labels, args)
+
+        trial_idx_arr = np.full(shape=(*trial_features.shape[:-1], 1), fill_value=trial_num)
+        trial_features = np.concatenate([trial_features, trial_idx_arr], axis=-1)
+
+        all_features.append(trial_features)
+        all_labels.append(trial_labels_proc)
+
+    features = np.vstack(all_features)
+    labels = np.vstack(all_labels)
+
+    return features, labels

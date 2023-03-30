@@ -45,12 +45,13 @@ def convert_to_full_paths(file_names, base_path):
     return [os.path.join(base_path, file_name) for file_name in file_names]
 
 
-def load_and_concat(file_names, ext=None, include_uid=False):
+def load_and_concat(file_names, ext=None, include_uid=False, remove_trial_dim=True):
     """
     Load and combine data (X and y) from multiple files. Add given extension if present to each file before loading.
     :param file_names: List of file names
     :param ext: String specifying file extension to append to each file name if given
     :param include_uid: Boolean for whether to append each file a unique ID to the data
+    :param remove_trial_dim: Boolean for whether trials dim (last) should be ignored
     :return: Tuple of Numpy arrays as (X, y)
     """
     all_x = []
@@ -59,12 +60,15 @@ def load_and_concat(file_names, ext=None, include_uid=False):
         path = file + (ext if ext is not None else '')
         X, y = load_data(path)
 
+        if remove_trial_dim:
+            X = X[..., :-1]
+
         if include_uid:
             uid = np.full((*X.shape[:-1], 1), fill_value=i)
             X = np.concatenate([X, uid], axis=-1)
 
         all_x.append(X)
-        all_y.append(y-1)  #TODO: REMOVE -1
+        all_y.append(y)
 
     all_x = np.concatenate(all_x)
     all_y = np.concatenate(all_y).astype(np.int8)

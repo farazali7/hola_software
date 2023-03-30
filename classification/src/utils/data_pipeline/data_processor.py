@@ -26,6 +26,8 @@ def preprocess_data(emg_data, grasp_labels, butter_ord, butter_freq, notch_freq,
     :param from_np: Boolean denoting if data from Ninapro is being used (if True, this will regroup grasp labels)
     :param save_path: String, path to save the data in
     """
+    emg_data, trials = emg_data[..., :-1], emg_data[..., -1:]
+
     # Remove cable sway and extraneous frequencies
     emg_data = butter_bandpass_filter(emg_data, butter_ord, butter_freq, sampling_freq)
 
@@ -34,10 +36,9 @@ def preprocess_data(emg_data, grasp_labels, butter_ord, butter_freq, notch_freq,
 
     # Resample if desired
     if target_freq is not None:
-        data = np.concatenate([emg_data, grasp_labels], axis=1)
+        data = np.concatenate([emg_data, trials, grasp_labels], axis=1)
         resampled_data = downsample(data, target_freq, sampling_freq)
-        last_dim = resampled_data.shape[1] - 1
-        emg_data, grasp_labels = resampled_data[:, :last_dim], resampled_data[:, last_dim:]
+        emg_data, grasp_labels = resampled_data[..., :-1], resampled_data[..., -1:]
 
     grasp_labels = grasp_labels.astype(int)
 

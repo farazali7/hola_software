@@ -37,8 +37,7 @@ def perform_experiment():
     gm_healthy_subjects = ['S' + str(x + 115) for x in gm_healthy_subjects]
     gm_healthy_subjects = convert_to_full_paths(gm_healthy_subjects, gm_processed_data_path)
 
-    # data_sources = [np_healthy_subjects, gm_healthy_subjects]
-    data_sources = [np_healthy_subjects]
+    data_sources = [np_healthy_subjects, gm_healthy_subjects]
 
     # DATALOADER ARGS #
     batch_size = cfg['BATCH_SIZE']

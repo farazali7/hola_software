@@ -6,12 +6,13 @@ import pytorch_lightning as pl
 from copy import deepcopy
 
 
-def get_model(model_name, model_args, trainer_args):
+def get_model(model_name, model_args, trainer_args, batch_specific_train=False):
     """
     Retrieve a module wrapped around specified model, initialized with proper arguments.
     :param model_name: String for underlying model architecture
     :param model_args: Dictionary of model architecture arguments
     :param trainer_args: Keyword arguments for model trainer such as learning rate, class weights, etc.
+    :param batch_specific_train: Boolean for whether to user batch specific trainer or regular
     :return: Model
     """
     try:
@@ -21,7 +22,7 @@ def get_model(model_name, model_args, trainer_args):
         print(e)
         raise Exception(f'Given model name: {model_name} is not supported.')
 
-    if model_name == 'CNN_ITER4':
+    if batch_specific_train:
         model = BatchwiseTrainModel(model_def, **trainer_args)
     else:
         model = Model(model_def, **trainer_args)
@@ -330,7 +331,7 @@ class CNN_ITER4(nn.Module):
         self.bnorm1 = nn.BatchNorm1d(num_features=256)
         self.hidden2 = nn.Linear(256, 128)
         self.bnorm2 = nn.BatchNorm1d(num_features=128)
-        self.output = nn.Linear(128, 2)
+        self.output = nn.Linear(128, 3)
         self.output_activation = torch.nn.Sigmoid()
         self.dropout = nn.Dropout(model_cfg['dropout'])
 
