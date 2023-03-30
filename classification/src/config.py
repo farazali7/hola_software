@@ -96,7 +96,7 @@ cfg = {
                 "goal": "maximize"
             },
         },
-        'N_EVALS': 6,
+        'N_EVALS': 11,
         'MLP': {
             "dropout": {
                 "distribution": "uniform",
