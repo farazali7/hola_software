@@ -70,7 +70,8 @@ cfg = {
     'CV_FOLDS': 5,
     'TEST_SET_PERCENTAGE': 0.2,
 
-    'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
+    # 'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
+    'CLASSES': ['TVG', 'LP'],  # In label order
 
     'GLOBAL_SEED': 7,
 

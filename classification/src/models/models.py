@@ -196,7 +196,9 @@ class BatchwiseTrainModel(Model):
         x, y = batch
 
         # Load subject-specific batch-norm weights
-        subject_num = int(torch.unique(x[..., -1]))
+        unique_val = torch.unique(x[..., -1])
+        assert len(unique_val) == 1, "Mixed batches not allowed."
+        subject_num = int(unique_val)
         self.current_subject_batch = subject_num
         if subject_num in self.bn_weights_by_subject:
             bn_weights = self.bn_weights_by_subject[subject_num]
@@ -224,7 +226,6 @@ class BatchwiseTrainModel(Model):
 
     def optimizer_step(self, *args, **kwargs):
         super().optimizer_step(*args, **kwargs)
-        # do something on_after_optimizer_step
         # Save batch-norm stats for this subject
         state_dict = self.model.state_dict()
         batch_norm_dict = {}
@@ -329,7 +330,7 @@ class CNN_ITER4(nn.Module):
         self.bnorm1 = nn.BatchNorm1d(num_features=256)
         self.hidden2 = nn.Linear(256, 128)
         self.bnorm2 = nn.BatchNorm1d(num_features=128)
-        self.output = nn.Linear(128, 3)
+        self.output = nn.Linear(128, 2)
         self.output_activation = torch.nn.Sigmoid()
         self.dropout = nn.Dropout(model_cfg['dropout'])
 
