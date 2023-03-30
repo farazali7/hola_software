@@ -9,6 +9,7 @@ def compute_class_weights(labels):
     """
     labels = torch.squeeze(labels)
     total = len(labels)
+    print(labels)
     class_counts = torch.bincount(labels)
     class_weights = 1 - (class_counts/total)
 
