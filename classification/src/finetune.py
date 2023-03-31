@@ -94,7 +94,7 @@ def split_data_by_reps(data, labels, num_reps, hard_lim=7):
     return train_data, train_labels, test_data, test_labels
 
 
-def finetune(subject, res_df):
+def finetune(subject, res_df, base_save_dir):
     seg_data, seg_labels = segregate_data_by_reps(subject)
 
     num_reps = finetune_params['REPS']
@@ -107,8 +107,7 @@ def finetune(subject, res_df):
     train_loader = torch.utils.data.DataLoader(train_dataset, **data_loader_args)
 
     # Setup trainer args
-    save_dir = os.path.join(cfg['SAVE_MODEL_PATH'], "finetune-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-                            subject.split('/')[-1])
+    save_dir = os.path.join(base_save_dir, subject.split('/')[-1])
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     callback_args = finetune_params['CALLBACKS']
@@ -116,7 +115,8 @@ def finetune(subject, res_df):
     callbacks = define_callbacks(callback_args)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    class_weights = compute_class_weights(train_labels).to(device)
+    # class_weights = compute_class_weights(train_labels).to(device)
+    class_weights = torch.Tensor([1.0, 1.0, 1.0]).to(device)
     trainer_args['class_weights'] = class_weights
 
     model_pth = torch.load(finetune_params['CHECKPOINT_PATH'])
@@ -218,9 +218,11 @@ if __name__ == '__main__':
                                    'Precision OH', 'Precision TVG', 'Precision LP',
                                    'Recall OH', 'Recall TVG', 'Recall LP'])
 
+    base_save_dir = os.path.join(cfg['SAVE_MODEL_PATH'], "finetune-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+
     for i, subject in enumerate(test_set_subjects):
         print(i)
-        res_df = finetune(subject, res_df)
+        res_df = finetune(subject, res_df, base_save_dir=base_save_dir)
 
     res_df.to_csv('full_test_metrics.csv')
 
