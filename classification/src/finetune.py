@@ -104,7 +104,7 @@ def finetune(subject, res_df, base_save_dir):
     train_labels = torch.Tensor(train_labels).to(torch.long)
     train_dataset = torch.utils.data.TensorDataset(train_data, train_labels)
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, **data_loader_args)
+    train_loader = torch.utils.data.DataLoader(train_dataset, **data_loader_args, drop_last=True)
 
     # Setup trainer args
     save_dir = os.path.join(base_save_dir, subject[0].split('/')[-1])
@@ -221,7 +221,7 @@ if __name__ == '__main__':
     base_save_dir = os.path.join(cfg['SAVE_MODEL_PATH'], "finetune-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
     pairs = [z for z in zip(test_set_subjects[::2], test_set_subjects[1::2])]
-    for i, subject in enumerate(pairs):
+    for i, subject in enumerate(pairs[5:]):
         print(i)
         res_df = finetune(subject, res_df, base_save_dir=base_save_dir)
 
