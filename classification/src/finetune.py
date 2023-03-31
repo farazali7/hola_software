@@ -108,7 +108,7 @@ def finetune(subject, res_df):
 
     # Setup trainer args
     save_dir = os.path.join(cfg['SAVE_MODEL_PATH'], "finetune-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-                            subject)
+                            subject.split('/')[-1])
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     callback_args = finetune_params['CALLBACKS']
