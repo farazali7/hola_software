@@ -163,7 +163,7 @@ def finetune(subject, res_df, base_save_dir):
     res_df.loc[len(res_df)] = row
 
     df = pd.DataFrame(test_metrics)
-    df['Subject'] = subject
+    df['Subject'] = subject[0] + '&' + subject[1]
 
     torch.save(df, os.path.join(save_dir, 'test_metrics.pth'))
 
