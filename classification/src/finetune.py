@@ -127,7 +127,7 @@ def finetune(subject, res_df):
     model.load_state_dict(model_pth['model_state_dict'])
 
     # trained_model = load_model_from_checkpoint(checkpoint_path=finetune_params['CHECKPOINT_PATH'], strict=False)
-    trainer = Trainer(callbacks=callbacks, max_epochs=finetune_params['EPOCHS'], deterministic=True, logger=None)
+    trainer = Trainer(callbacks=callbacks, max_epochs=finetune_params['EPOCHS'], deterministic=True, logger=False)
 
     # Fine-tune
     trainer.fit(model=model, train_dataloaders=train_loader)
