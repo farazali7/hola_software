@@ -17,6 +17,7 @@ from classification.src.utils.experimentation import create_equal_folds, \
     compute_class_weights, CombinationDataset, ComboBatchSampler, CustomBatchSampler
 from classification.src.utils.experimentation import flatten_dict, aggregate_predictions
 
+
 GLOBAL_SEED = cfg['GLOBAL_SEED']
 
 
@@ -250,7 +251,7 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
                            'data_loader_args': data_loader_args,
                            'callback_args': callback_args,
                            'num_epochs': num_epochs,
-                           'batch_specific_train': False}
+                           'batch_specific_train': cfg['BATCH_SPECIFIC_TRAIN']}
 
         model_score, model_path = train_single(train_set=train_set,
                                                model_def=model_def,

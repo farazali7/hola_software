@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from copy import deepcopy
 
 
-def get_model(model_name, model_args, trainer_args, batch_specific_train=False):
+def get_model(model_name, model_args, trainer_args, batch_specific_train=False, use_legacy=False):
     """
     Retrieve a module wrapped around specified model, initialized with proper arguments.
     :param model_name: String for underlying model architecture
@@ -22,7 +22,9 @@ def get_model(model_name, model_args, trainer_args, batch_specific_train=False):
         print(e)
         raise Exception(f'Given model name: {model_name} is not supported.')
 
-    if batch_specific_train:
+    if use_legacy:
+        model = LegacyModel(model_def, **trainer_args)
+    elif batch_specific_train:
         model = BatchwiseTrainModel(model_def, **trainer_args)
     else:
         model = Model(model_def, **trainer_args)
@@ -30,19 +32,19 @@ def get_model(model_name, model_args, trainer_args, batch_specific_train=False):
     return model
 
 
-def load_model_from_checkpoint(checkpoint_path):
+def load_model_from_checkpoint(checkpoint_path, strict=True):
     """
     Load and return a model from a given checkpoint path.
     :param checkpoint_path: String for location of model
     :return: Model from checkpoint
     """
-    model = Model.load_from_checkpoint(checkpoint_path=checkpoint_path)
+    model = Model.load_from_checkpoint(checkpoint_path=checkpoint_path, strict=strict)
 
     return model
 
 
 class Model(pl.LightningModule):
-    def __init__(self, model, learning_rate, class_weights, classes, metrics, fold=None):
+    def __init__(self, model, learning_rate, class_weights, classes, metrics, fold=None, prev_optimizer_state=None):
         super().__init__()
         self.model = model
         self.learning_rate = learning_rate
@@ -51,12 +53,18 @@ class Model(pl.LightningModule):
         self.train_metrics = metrics.clone(prefix='train_')
         self.val_metrics = metrics.clone(prefix='val_')
         self.test_metrics = metrics.clone(prefix='test_')
-        self.fold = fold
-        self.log_prefix = 'fold_' + str(self.fold) + '/'
+
+        if fold is not None:
+            self.fold = fold
+            self.log_prefix = 'fold_' + str(self.fold) + '/'
+        else:
+            self.log_prefix = ''
 
         self.train_step_outputs = []
         self.val_step_outputs = []
         self.test_step_outputs = []
+
+        self.prev_optimizer_state = prev_optimizer_state
 
         self.save_hyperparameters()
 
@@ -147,6 +155,17 @@ class Model(pl.LightningModule):
         return {'preds': preds, 'targets': targets}
 
     def configure_optimizers(self):
+        if self.prev_optimizer_state is not None:
+            return self.configure_optimizers_ckpt()
+        else:
+            return self.configure_optimizers_fresh()
+
+    def configure_optimizers_ckpt(self):
+        optimizer = optim.Adam(self.model.parameters(), self.learning_rate)
+        optimizer.load_state_dict(deepcopy(self.prev_optimizer_state))
+        return optimizer
+
+    def configure_optimizers_fresh(self):
         optimizer = optim.Adam(self.model.parameters(), self.learning_rate)
         return {
             "optimizer": optimizer,
@@ -237,19 +256,25 @@ class BatchwiseTrainModel(Model):
 
 
 class LegacyModel(nn.Module):
-    def __init__(self, learning_rate, class_weights=None, metrics=None):
+    def __init__(self, model, learning_rate, classes, class_weights=None, metrics=None, prev_optimizer_state=None):
         super(LegacyModel, self).__init__()
+        self.model = model
         self.learning_rate = learning_rate
+        self.classes = classes
         self.class_weights = class_weights
         self.metrics = metrics
+        self.prev_optimizer_state = prev_optimizer_state
 
     def fit(self, train_loader, epoch):
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
-        self.train()
+        if self.prev_optimizer_state is not None:
+            optimizer.load_state_dict(deepcopy(self.prev_optimizer_state))
+
+        self.model.train()
         total_loss = 0
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             optimizer.zero_grad()
-            outputs = self(inputs)
+            outputs = self.model(inputs)
             targets = torch.squeeze(targets)
             loss = nn.CrossEntropyLoss(weight=self.class_weights)(outputs, targets)
             total_loss += loss
@@ -270,12 +295,12 @@ class LegacyModel(nn.Module):
         return total_loss / len(train_loader)
 
     def evaluate(self, test_loader):
-        self.eval()
+        self.model.eval()
         total_loss = 0
         correct = 0
         with torch.no_grad():
             for inputs, targets in test_loader:
-                outputs = self(inputs)
+                outputs = self.model(inputs)
                 targets = torch.squeeze(targets)
                 loss = nn.CrossEntropyLoss()(outputs, targets)
                 total_loss += loss
@@ -303,6 +328,9 @@ class LegacyModel(nn.Module):
             res['metrics'] = self.compute_metrics(labels, preds)
 
         return res
+
+    # def load_state_dict(self, state_dict, strict=True):
+    #     self.model.load_state_dict(state_dict, strict)
 
     def compute_metrics(self, labels, preds):
         """

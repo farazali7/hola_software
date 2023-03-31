@@ -56,7 +56,7 @@ cfg = {
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
     'FEATURE_EXTRACTION_FUNC': 'feature_set_6',
 
-    'MODEL_ARCHITECTURE': 'CNN',
+    'MODEL_ARCHITECTURE': 'CNN_ITER4',
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
@@ -71,6 +71,8 @@ cfg = {
     'TEST_SET_PERCENTAGE': 0.2,
 
     'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
+
+    'BATCH_SPECIFIC_TRAIN': False,  # If train batches should be specific to 1 subject at a time (ex. for AdaBN scheme)
 
     'GLOBAL_SEED': 7,
 
@@ -174,5 +176,28 @@ cfg = {
     'WANDB': {
         'PROJECT': 'HOLA',
         'ENTITY': 'fali'
-    }
+    },
+
+    # Fine-tuning parameters such as whether to run script locally (adjust paths), how many reps to use for training
+    'FINETUNE': {
+        'RUN_LOCALLY': False,
+        'REPS': 1,
+        'CHECKPOINT_PATH': 'results/gridai/model.pth',  # Pre-trained model
+        # 'CHECKPOINT_PATH': 'results/gridai/epoch=34--val_Macro F1-Score=0.00--fold=5.ckpt',  # Pre-trained model
+        'EPOCHS': 20,
+        'BATCH_SIZE': 32,
+        'CALLBACKS': {
+            # 'EARLY_STOPPING': {
+            #     'monitor': 'val_Macro F1-Score',
+            #     'min_delta': 0.001,
+            #     'patience': 8
+            # },
+            'MODEL_CHECKPOINT': {
+                'filename': '{epoch}--{train_loss:.2f}',
+                'monitor': 'train_loss',
+                'mode': 'min',
+                'auto_insert_metric_name': True
+            }
+        }
+    },
 }
