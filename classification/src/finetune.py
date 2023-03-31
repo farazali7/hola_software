@@ -34,7 +34,7 @@ def adjust_subject_paths(subjects):
 
 def segregate_data_by_reps(subject):
     # Load their data
-    test_x, test_y = load_and_concat([subject], ext='.pkl', include_uid=False, remove_trial_dim=False)
+    test_x, test_y = load_and_concat(subject, ext='.pkl', include_uid=False, remove_trial_dim=False)
 
     # Perform one iteration of fine-tuning on X reps
     # Get training set (X reps for each grasp)
@@ -220,10 +220,11 @@ if __name__ == '__main__':
 
     base_save_dir = os.path.join(cfg['SAVE_MODEL_PATH'], "finetune-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-    for i, subject in enumerate(test_set_subjects):
+    pairs = [z for z in zip(test_set_subjects[::2], test_set_subjects[1::2])]
+    for i, subject in enumerate(pairs):
         print(i)
         res_df = finetune(subject, res_df, base_save_dir=base_save_dir)
 
-    res_df.to_csv(os.path.join(base_save_dir,'full_test_metrics.csv'))
+    res_df.to_csv(os.path.join(base_save_dir, 'full_test_metrics.csv'))
 
     print('Done fine-tuning.')
