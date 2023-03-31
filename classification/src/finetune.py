@@ -119,18 +119,12 @@ def finetune(subject, res_df, base_save_dir):
     class_weights = torch.Tensor([0.6, 0.9, 0.9]).to(device)
     trainer_args['class_weights'] = class_weights
 
-    model_pth = torch.load(finetune_params['CHECKPOINT_PATH'])
-    trainer_args['prev_optimizer_state'] = model_pth['optimizer_state_dict'][0]
-
-    model = get_model(model_name=cfg['MODEL_ARCHITECTURE'], model_args=model_args, trainer_args=trainer_args,
-                      use_legacy=False)
-    model.load_state_dict(model_pth['model_state_dict'])
-
-    # trained_model = load_model_from_checkpoint(checkpoint_path=finetune_params['CHECKPOINT_PATH'], strict=False)
+    trained_model = load_model_from_checkpoint(checkpoint_path=finetune_params['CHECKPOINT_PATH'],
+                                               metrics=trainer_args['metrics'].clone(), class_weights=class_weights)
     trainer = Trainer(callbacks=callbacks, max_epochs=finetune_params['EPOCHS'], deterministic=True, logger=False)
 
     # Fine-tune
-    trainer.fit(model=model, train_dataloaders=train_loader)
+    trainer.fit(model=trained_model, train_dataloaders=train_loader)
 
     # Load best model
     best_model_ckpt = trainer.checkpoint_callback.best_model_path

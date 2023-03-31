@@ -32,13 +32,13 @@ def get_model(model_name, model_args, trainer_args, batch_specific_train=False, 
     return model
 
 
-def load_model_from_checkpoint(checkpoint_path, strict=True, metrics=None):
+def load_model_from_checkpoint(checkpoint_path, strict=True, **kwargs):
     """
     Load and return a model from a given checkpoint path.
     :param checkpoint_path: String for location of model
     :return: Model from checkpoint
     """
-    model = Model.load_from_checkpoint(checkpoint_path=checkpoint_path, strict=strict, metrics=metrics)
+    model = Model.load_from_checkpoint(checkpoint_path=checkpoint_path, strict=strict, **kwargs)
 
     return model
 
