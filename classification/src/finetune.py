@@ -107,7 +107,7 @@ def finetune(subject, res_df, base_save_dir):
     train_loader = torch.utils.data.DataLoader(train_dataset, **data_loader_args)
 
     # Setup trainer args
-    save_dir = os.path.join(base_save_dir, subject.split('/')[-1])
+    save_dir = os.path.join(base_save_dir, subject[0].split('/')[-1])
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     callback_args = finetune_params['CALLBACKS']
