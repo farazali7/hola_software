@@ -40,11 +40,12 @@ cfg = {
         },
         'NINAPRO_DB2': {
             'RAW_DATA_PATH': 'data/raw/ninapro_db2',
-            'FORMATTED_DATA_PATH': 'data/formatted/iter9/ninapro_db2',
-            'PROCESSED_DATA_PATH': 'data/processed/iter11/ninapro_db2',
+            'FORMATTED_DATA_PATH': 'data/formatted/iter10/ninapro_db2',
+            'PROCESSED_DATA_PATH': 'data/processed/iter12/ninapro_db2',
             'HEALTHY_SUBJECTS': [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 27, 28,
                                  29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
-            'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            'ELECTRODE_IDS': [4, 5, 1, 2, 3],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            # 'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
             'GRASP_LABELS': [5, 5, 17],  # 5 = hand open (exB), 5 = medium wrap (TVG)(exC), 17 = lateral grasp (pinch)
             'SAMPLING_FREQ': 2000,
             'REGRASP_IDS': {
@@ -55,10 +56,11 @@ cfg = {
         },
         'NINAPRO_DB5': {
             'RAW_DATA_PATH': 'data/raw/ninapro_db5',
-            'FORMATTED_DATA_PATH': 'data/formatted/iter9/ninapro_db5',
-            'PROCESSED_DATA_PATH': 'data/processed/iter11/ninapro_db5',
+            'FORMATTED_DATA_PATH': 'data/formatted/iter10/ninapro_db5',
+            'PROCESSED_DATA_PATH': 'data/processed/iter12/ninapro_db5',
             'HEALTHY_SUBJECTS': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            'ELECTRODE_IDS': [4, 5, 1, 2, 3],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            # 'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
             'GRASP_LABELS': [5, 5, 17],  # 5 = hand open (exB), 5 = medium wrap (TVG)(exC), 17 = lateral grasp (pinch)
             'SAMPLING_FREQ': 200,
             'REGRASP_IDS': {
@@ -69,10 +71,11 @@ cfg = {
         },
         'NINAPRO_DB7': {
             'RAW_DATA_PATH': 'data/raw/ninapro_db7',
-            'FORMATTED_DATA_PATH': 'data/formatted/iter9/ninapro_db7',
-            'PROCESSED_DATA_PATH': 'data/processed/iter11/ninapro_db7',
+            'FORMATTED_DATA_PATH': 'data/formatted/iter10/ninapro_db7',
+            'PROCESSED_DATA_PATH': 'data/processed/iter12/ninapro_db7',
             'HEALTHY_SUBJECTS': [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20],
-            'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            'ELECTRODE_IDS': [4, 5, 1, 2, 3],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            # 'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
             'GRASP_LABELS': [5, 5, 17],  # 5 = hand open (exB), 5 = medium wrap (TVG)(exC), 17 = lateral grasp (pinch)
             'SAMPLING_FREQ': 2000,
             'REGRASP_IDS': {
@@ -115,7 +118,7 @@ cfg = {
 
     'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
 
-    'BATCH_SPECIFIC_TRAIN': True,  # If train batches should be specific to 1 subject at a time (ex. for AdaBN scheme)
+    'BATCH_SPECIFIC_TRAIN': False,  # If train batches should be specific to 1 subject at a time (ex. for AdaBN scheme)
 
     'GLOBAL_SEED': 7,
 
