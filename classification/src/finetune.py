@@ -115,8 +115,8 @@ def finetune(subject, res_df, base_save_dir):
     callbacks = define_callbacks(callback_args)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # class_weights = compute_class_weights(train_labels).to(device)
-    class_weights = torch.Tensor([1.0, 1.0, 1.0]).to(device)
+    class_weights = compute_class_weights(train_labels).to(device)
+    # class_weights = torch.Tensor([1.0, 1.0, 1.0]).to(device)
     trainer_args['class_weights'] = class_weights
 
     model_pth = torch.load(finetune_params['CHECKPOINT_PATH'])
