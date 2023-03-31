@@ -99,12 +99,12 @@ cfg = {
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
     'FEATURE_EXTRACTION_FUNC': 'feature_set_6',
 
-    'MODEL_ARCHITECTURE': 'CNN',
+    'MODEL_ARCHITECTURE': 'CNN_ITER4',
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
     'BATCH_SIZE': 256,
-    'EPOCHS': 1,
+    'EPOCHS': 40,
     'LR': 0.001,
     'SHUFFLE': True,
     'NUM_WORKERS': os.cpu_count(),
