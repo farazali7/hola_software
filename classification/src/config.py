@@ -181,7 +181,7 @@ cfg = {
     # Fine-tuning parameters such as whether to run script locally (adjust paths), how many reps to use for training
     'FINETUNE': {
         'RUN_LOCALLY': False,
-        'REPS': 1,
+        'REPS': 3,
         'CHECKPOINT_PATH': 'results/gridai/model.pth',  # Pre-trained model
         # 'CHECKPOINT_PATH': 'results/gridai/epoch=34--val_Macro F1-Score=0.00--fold=5.ckpt',  # Pre-trained model
         'EPOCHS': 20,

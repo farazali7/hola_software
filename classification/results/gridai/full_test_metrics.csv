@@ -1,0 +1,8 @@
+,Subject,F1 OH,F1 TVG,F1 LP,Precision OH,Precision TVG,Precision LP,Recall OH,Recall TVG,Recall LP
+0,/datastores/iter10/ninapro_db10/S017,0.0,0.7882037,0.8924303,0.0,0.9423077,0.9411765,0.0,0.67741936,0.8484849
+1,/datastores/iter10/grabmyo_openhand/S132,0.553746,0.0,0.0,1.0,0.0,0.0,0.3828829,0.0,0.0
+2,/datastores/iter10/ninapro_db10/S039,0.0,0.66429836,0.5027933,0.0,0.599359,0.6766917,0.0,0.7450199,0.4
+3,/datastores/iter10/grabmyo_openhand/S129,0.4199288,0.0,0.0,1.0,0.0,0.0,0.26576576,0.0,0.0
+4,/datastores/iter10/ninapro_db10/S010,0.0,0.46650124,0.5374677,0.0,0.56626505,0.6753247,0.0,0.39662448,0.44635195
+5,/datastores/iter10/grabmyo_openhand/S120,0.40860215,0.0,0.0,1.0,0.0,0.0,0.25675675,0.0,0.0
+6,/datastores/iter10/ninapro_db10/S038,0.0,0.5513785,0.5251397,0.0,0.6043956,0.68115944,0.0,0.50691247,0.42727274

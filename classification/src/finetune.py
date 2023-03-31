@@ -220,10 +220,10 @@ if __name__ == '__main__':
 
     base_save_dir = os.path.join(cfg['SAVE_MODEL_PATH'], "finetune-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-    for i, subject in enumerate(test_set_subjects[8:]):
+    for i, subject in enumerate(test_set_subjects):
         print(i)
         res_df = finetune(subject, res_df, base_save_dir=base_save_dir)
 
-    res_df.to_csv('full_test_metrics.csv')
+    res_df.to_csv(os.path.join(base_save_dir,'full_test_metrics.csv'))
 
     print('Done fine-tuning.')
