@@ -221,7 +221,7 @@ if __name__ == '__main__':
     base_save_dir = os.path.join(cfg['SAVE_MODEL_PATH'], "finetune-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
     pairs = [z for z in zip(test_set_subjects[::2], test_set_subjects[1::2])]
-    for i, subject in enumerate(pairs[5:]):
+    for i, subject in enumerate(pairs):
         print(i)
         res_df = finetune(subject, res_df, base_save_dir=base_save_dir)
 
