@@ -132,6 +132,7 @@ dmypy.json
 data/
 */results/models/
 */results/visualizations/
+classification/results/models/gridai/
 **.DS_Store
 .idea/
 wandb/

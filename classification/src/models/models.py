@@ -32,13 +32,13 @@ def get_model(model_name, model_args, trainer_args, batch_specific_train=False, 
     return model
 
 
-def load_model_from_checkpoint(checkpoint_path, strict=True):
+def load_model_from_checkpoint(checkpoint_path, strict=True, metrics=None):
     """
     Load and return a model from a given checkpoint path.
     :param checkpoint_path: String for location of model
     :return: Model from checkpoint
     """
-    model = Model.load_from_checkpoint(checkpoint_path=checkpoint_path, strict=strict)
+    model = Model.load_from_checkpoint(checkpoint_path=checkpoint_path, strict=strict, metrics=metrics)
 
     return model
 
@@ -66,7 +66,7 @@ class Model(pl.LightningModule):
 
         self.prev_optimizer_state = prev_optimizer_state
 
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=['metrics'])
 
     def training_step(self, batch, batch_idx):
         x, y = batch

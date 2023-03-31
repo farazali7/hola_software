@@ -103,6 +103,7 @@ def format_grabmyo_data(subject_id, all_records, electrode_ids, grasp_ids, save_
 
     return bipolar_data, grasp_labels
 
+
 def format_grabmyo_data_all(subject_id, all_records, electrode_ids, grasp_ids, save_dir=None):
     '''
     Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
@@ -160,6 +161,147 @@ def format_grabmyo_data_all(subject_id, all_records, electrode_ids, grasp_ids, s
     return bipolar_data, grasp_labels
 
 
+def format_ninapro_db2_data(subject_id, data_path, grasp_ids, regrasp_ids, electrode_ids, save_dir=None):
+    '''
+    Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
+    dataset.
+    :param data_path: String, path to main dataset directory
+    :param subject_id: String, subject number specified by dataset file naming for specific subject
+    :param grasp_ids: List of grasp int IDs
+    :param regrasp_ids: List of grasp IDs to use for formatted labels
+    :param electrode_ids: Array of ints representing IDs for electrode channels
+    :param save_dir: String, path to directory to save the data in
+    :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
+    '''
+    oh_raw_data = loadmat(os.path.join(data_path, 'DB2_s'+str(subject_id), 'S'+str(subject_id)+'_E1_A1.mat'))
+    tvg_lp_raw_data = loadmat(os.path.join(data_path, 'DB2_s'+str(subject_id), 'S' + str(subject_id) + '_E2_A1.mat'))
+
+    # Get open hand, TVG, LP labels
+    hand_samples = oh_raw_data['restimulus']
+    oh_idxs = np.isin(hand_samples, grasp_ids[0]).ravel()
+    grip_samples = tvg_lp_raw_data['restimulus']
+    adjusted_tvg_lp_ids = [id+17 for id in grasp_ids[1:]]  # Exercise B ends at 17 so this continues from 18
+    tvg_lp_idxs = np.isin(grip_samples, adjusted_tvg_lp_ids).ravel()
+
+    # Apply filters and get relevant electrode channels
+    oh_data = oh_raw_data['emg'][oh_idxs][:, electrode_ids]
+    oh_labels = oh_raw_data['restimulus'][oh_idxs]
+    oh_labels[oh_labels == grasp_ids[0]] = regrasp_ids['OH']
+
+    tvg_lp_data = tvg_lp_raw_data['emg'][tvg_lp_idxs][:, electrode_ids]
+    tvg_lp_labels = tvg_lp_raw_data['restimulus'][tvg_lp_idxs]
+    tvg_lp_labels[tvg_lp_labels == adjusted_tvg_lp_ids[0]] = regrasp_ids['TVG']
+    tvg_lp_labels[tvg_lp_labels == adjusted_tvg_lp_ids[1]] = regrasp_ids['LP']
+
+    oh_reps = oh_raw_data['rerepetition'][oh_idxs] - 1
+    tvg_lp_reps = tvg_lp_raw_data['rerepetition'][tvg_lp_idxs] - 1
+
+    oh_combined = np.concatenate([oh_data, oh_reps], axis=-1)
+    tvg_lp_combined = np.concatenate([tvg_lp_data, tvg_lp_reps], axis=-1)
+
+    emg_data = np.vstack([oh_combined, tvg_lp_combined])
+    grasp_labels = np.vstack([oh_labels, tvg_lp_labels])
+
+    if save_dir:
+        save_path = os.path.join(save_dir, 'np2_' + str(subject_id) + '.pkl')
+        save_data(emg_data, grasp_labels, save_path)
+
+    return emg_data, grasp_labels
+
+
+def format_ninapro_db5_data(subject_id, data_path, grasp_ids, regrasp_ids, electrode_ids, save_dir=None):
+    '''
+    Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
+    dataset.
+    :param data_path: String, path to main dataset directory
+    :param subject_id: String, subject number specified by dataset file naming for specific subject
+    :param grasp_ids: List of grasp int IDs
+    :param electrode_ids: Array of ints representing IDs for electrode channels
+    :param save_dir: String, path to directory to save the data in
+    :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
+    '''
+    oh_raw_data = loadmat(os.path.join(data_path, 's'+str(subject_id), 'S'+str(subject_id)+'_E2_A1.mat'))
+    tvg_lp_raw_data = loadmat(os.path.join(data_path, 's'+str(subject_id), 'S' + str(subject_id) + '_E3_A1.mat'))
+
+    # Get open hand, TVG, LP labels
+    hand_samples = oh_raw_data['restimulus']
+    oh_idxs = np.isin(hand_samples, grasp_ids[0]).ravel()
+    grip_samples = tvg_lp_raw_data['restimulus']
+    tvg_lp_idxs = np.isin(grip_samples, grasp_ids[1:]).ravel()
+
+    # Apply filters and get relevant electrode channels
+    oh_data = oh_raw_data['emg'][oh_idxs][:, electrode_ids]
+    oh_labels = oh_raw_data['restimulus'][oh_idxs]
+    oh_labels[oh_labels == grasp_ids[0]] = regrasp_ids['OH']
+
+    tvg_lp_data = tvg_lp_raw_data['emg'][tvg_lp_idxs][:, electrode_ids]
+    tvg_lp_labels = tvg_lp_raw_data['restimulus'][tvg_lp_idxs]
+    tvg_lp_labels[tvg_lp_labels == grasp_ids[1]] = regrasp_ids['TVG']
+    tvg_lp_labels[tvg_lp_labels == grasp_ids[2]] = regrasp_ids['LP']
+
+    oh_reps = oh_raw_data['rerepetition'][oh_idxs] - 1
+    tvg_lp_reps = tvg_lp_raw_data['rerepetition'][tvg_lp_idxs] - 1
+
+    oh_combined = np.concatenate([oh_data, oh_reps], axis=-1)
+    tvg_lp_combined = np.concatenate([tvg_lp_data, tvg_lp_reps], axis=-1)
+
+    emg_data = np.vstack([oh_combined, tvg_lp_combined])
+    grasp_labels = np.vstack([oh_labels, tvg_lp_labels])
+
+    if save_dir:
+        save_path = os.path.join(save_dir, 'np5_' + str(subject_id) + '.pkl')
+        save_data(emg_data, grasp_labels, save_path)
+
+    return emg_data, grasp_labels
+
+
+def format_ninapro_db7_data(subject_id, data_path, grasp_ids, regrasp_ids, electrode_ids, save_dir=None):
+    '''
+    Load and retrieve NumPy arrays containing pertinent EMG classification data_pipeline + labels for given subject from the raw
+    dataset.
+    :param data_path: String, path to main dataset directory
+    :param subject_id: String, subject number specified by dataset file naming for specific subject
+    :param grasp_ids: List of grasp int IDs
+    :param electrode_ids: Array of ints representing IDs for electrode channels
+    :param save_dir: String, path to directory to save the data in
+    :return Tuple of two NumPy arrays as (emg data_pipeline, grasp labels)
+    '''
+    oh_raw_data = loadmat(os.path.join(data_path, 'Subject_'+str(subject_id), 'S'+str(subject_id)+'_E1_A1.mat'))
+    tvg_lp_raw_data = loadmat(os.path.join(data_path, 'Subject_'+str(subject_id), 'S' + str(subject_id) + '_E2_A1.mat'))
+
+    # Get open hand, TVG, LP labels
+    hand_samples = oh_raw_data['restimulus']
+    oh_idxs = np.isin(hand_samples, grasp_ids[0]).ravel()
+    grip_samples = tvg_lp_raw_data['restimulus']
+    adjusted_tvg_lp_ids = [id+17 for id in grasp_ids[1:]]  # Exercise B ends at 17 so this continues from 18
+    tvg_lp_idxs = np.isin(grip_samples, adjusted_tvg_lp_ids).ravel()
+
+    # Apply filters and get relevant electrode channels
+    oh_data = oh_raw_data['emg'][oh_idxs][:, electrode_ids]
+    oh_labels = oh_raw_data['restimulus'][oh_idxs]
+    oh_labels[oh_labels == grasp_ids[0]] = regrasp_ids['OH']
+
+    tvg_lp_data = tvg_lp_raw_data['emg'][tvg_lp_idxs][:, electrode_ids]
+    tvg_lp_labels = tvg_lp_raw_data['restimulus'][tvg_lp_idxs]
+    tvg_lp_labels[tvg_lp_labels == adjusted_tvg_lp_ids[0]] = regrasp_ids['TVG']
+    tvg_lp_labels[tvg_lp_labels == adjusted_tvg_lp_ids[1]] = regrasp_ids['LP']
+
+    oh_reps = oh_raw_data['rerepetition'][oh_idxs] - 1
+    tvg_lp_reps = tvg_lp_raw_data['rerepetition'][tvg_lp_idxs] - 1
+
+    oh_combined = np.concatenate([oh_data, oh_reps], axis=-1)
+    tvg_lp_combined = np.concatenate([tvg_lp_data, tvg_lp_reps], axis=-1)
+
+    emg_data = np.vstack([oh_combined, tvg_lp_combined])
+    grasp_labels = np.vstack([oh_labels, tvg_lp_labels])
+
+    if save_dir:
+        save_path = os.path.join(save_dir, 'np7_' + str(subject_id) + '.pkl')
+        save_data(emg_data, grasp_labels, save_path)
+
+    return emg_data, grasp_labels
+
+
 def conditions_met(record):
     '''
     Make a series of conditions on a record from PhysioNet database to filter list
@@ -191,58 +333,133 @@ def organize_pn_records(record_list):
 
 
 if __name__ == '__main__':
-    # NINAPRO DB10
-    np_cfg = cfg['DATASETS']['NINAPRO_DB10']
-    raw_data_path = np_cfg['RAW_DATA_PATH']
-    healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
-    affected_subjects = np_cfg['AFFECTED_SUBJECTS']
-    subject_ids = healthy_subjects + affected_subjects
-    data_col = np_cfg['DATA_COL_NAME']
-    label_col = np_cfg['LABEL_COL_NAME']
-    grasp_ids = np_cfg['GRASP_LABELS']
-    electrode_ids = np_cfg['ELECTRODE_IDS']
-    save_dir = np_cfg['FORMATTED_DATA_PATH']
+    # # NINAPRO DB10
+    # np_cfg = cfg['DATASETS']['NINAPRO_DB10']
+    # raw_data_path = np_cfg['RAW_DATA_PATH']
+    # healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
+    # affected_subjects = np_cfg['AFFECTED_SUBJECTS']
+    # subject_ids = healthy_subjects + affected_subjects
+    # data_col = np_cfg['DATA_COL_NAME']
+    # label_col = np_cfg['LABEL_COL_NAME']
+    # grasp_ids = np_cfg['GRASP_LABELS']
+    # electrode_ids = np_cfg['ELECTRODE_IDS']
+    # save_dir = np_cfg['FORMATTED_DATA_PATH']
+    #
+    # if not os.path.exists(save_dir):
+    #     os.makedirs(save_dir)
+    #
+    # format_params = {'data_path': raw_data_path,
+    #                  'data_col': data_col,
+    #                  'label_col': label_col,
+    #                  'grasp_ids': grasp_ids,
+    #                  'electrode_ids': electrode_ids,
+    #                  'save_dir': save_dir}
+    #
+    # format_ninapro_db10_data(subject_ids[0], **format_params)
+    #
+    # with Pool() as pool:
+    #     res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
+    #                     total=len(subject_ids)))
+    #
+    # print('Done.')
+    #
+    # # GRABMYO
+    # gm_cfg = cfg['DATASETS']['GRABMYO']
+    # electrode_ids = gm_cfg['ELECTRODE_IDS']
+    # healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
+    # subject_ids = healthy_subjects
+    # grasp_ids = gm_cfg['GRASP_IDS']
+    # save_dir = gm_cfg['FORMATTED_DATA_PATH']
+    #
+    # if not os.path.exists(save_dir):
+    #     os.makedirs(save_dir)
+    #
+    # records = wfdb.get_record_list('grabmyo')
+    # filtered_records = set([record.split('\n')[0] for record in records if conditions_met(record)])
+    # records_by_subject = organize_pn_records(filtered_records)
+    #
+    # format_params = {'electrode_ids': electrode_ids,
+    #                  'all_records': records_by_subject,
+    #                  'grasp_ids': grasp_ids,
+    #                  'save_dir': save_dir}
+    #
+    # with Pool() as pool:
+    #     res = list(tqdm(pool.imap(partial(format_grabmyo_data, **format_params), records_by_subject.keys()),
+    #                     total=len(records_by_subject.keys())))
+    #
+    # print('Done.')
+
+    # NINAPRO DB2
+    np2_cfg = cfg['DATASETS']['NINAPRO_DB2']
+    raw_data_path = np2_cfg['RAW_DATA_PATH']
+    healthy_subjects = np2_cfg['HEALTHY_SUBJECTS']
+    subject_ids = healthy_subjects
+    grasp_ids = np2_cfg['GRASP_LABELS']
+    regrasp_ids = np2_cfg['REGRASP_IDS']
+    electrode_ids = np2_cfg['ELECTRODE_IDS']
+    save_dir = np2_cfg['FORMATTED_DATA_PATH']
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     format_params = {'data_path': raw_data_path,
-                     'data_col': data_col,
-                     'label_col': label_col,
                      'grasp_ids': grasp_ids,
+                     'regrasp_ids': regrasp_ids,
                      'electrode_ids': electrode_ids,
                      'save_dir': save_dir}
 
-    format_ninapro_db10_data(subject_ids[0], **format_params)
-
     with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(format_ninapro_db10_data, **format_params), subject_ids),
+        res = list(tqdm(pool.imap(partial(format_ninapro_db2_data, **format_params), subject_ids),
                         total=len(subject_ids)))
 
     print('Done.')
 
-    # GRABMYO
-    gm_cfg = cfg['DATASETS']['GRABMYO']
-    electrode_ids = gm_cfg['ELECTRODE_IDS']
-    healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
+    # NINAPRO DB5
+    np5_cfg = cfg['DATASETS']['NINAPRO_DB5']
+    raw_data_path = np5_cfg['RAW_DATA_PATH']
+    healthy_subjects = np5_cfg['HEALTHY_SUBJECTS']
     subject_ids = healthy_subjects
-    grasp_ids = gm_cfg['GRASP_IDS']
-    save_dir = gm_cfg['FORMATTED_DATA_PATH']
+    grasp_ids = np5_cfg['GRASP_LABELS']
+    regrasp_ids = np5_cfg['REGRASP_IDS']
+    electrode_ids = np5_cfg['ELECTRODE_IDS']
+    save_dir = np5_cfg['FORMATTED_DATA_PATH']
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    records = wfdb.get_record_list('grabmyo')
-    filtered_records = set([record.split('\n')[0] for record in records if conditions_met(record)])
-    records_by_subject = organize_pn_records(filtered_records)
-
-    format_params = {'electrode_ids': electrode_ids,
-                     'all_records': records_by_subject,
+    format_params = {'data_path': raw_data_path,
                      'grasp_ids': grasp_ids,
+                     'regrasp_ids': regrasp_ids,
+                     'electrode_ids': electrode_ids,
                      'save_dir': save_dir}
 
     with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(format_grabmyo_data, **format_params), records_by_subject.keys()),
-                        total=len(records_by_subject.keys())))
+        res = list(tqdm(pool.imap(partial(format_ninapro_db5_data, **format_params), subject_ids),
+                        total=len(subject_ids)))
+
+    print('Done.')
+
+    # NINAPRO DB7
+    np7_cfg = cfg['DATASETS']['NINAPRO_DB7']
+    raw_data_path = np7_cfg['RAW_DATA_PATH']
+    healthy_subjects = np7_cfg['HEALTHY_SUBJECTS']
+    subject_ids = healthy_subjects
+    grasp_ids = np7_cfg['GRASP_LABELS']
+    regrasp_ids = np7_cfg['REGRASP_IDS']
+    electrode_ids = np7_cfg['ELECTRODE_IDS']
+    save_dir = np7_cfg['FORMATTED_DATA_PATH']
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    format_params = {'data_path': raw_data_path,
+                     'grasp_ids': grasp_ids,
+                     'regrasp_ids': regrasp_ids,
+                     'electrode_ids': electrode_ids,
+                     'save_dir': save_dir}
+
+    with Pool() as pool:
+        res = list(tqdm(pool.imap(partial(format_ninapro_db7_data, **format_params), subject_ids),
+                        total=len(subject_ids)))
 
     print('Done.')

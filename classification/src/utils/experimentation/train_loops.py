@@ -102,7 +102,7 @@ def train_nn_model(train_data, train_labels, val_data, val_labels, model_def,
 
     # Load and return best model
     best_model_ckpt = trainer.checkpoint_callback.best_model_path
-    trained_model = load_model_from_checkpoint(best_model_ckpt)
+    trained_model = load_model_from_checkpoint(best_model_ckpt, metrics=trainer_args['metrics'].clone())
 
     val_out = trainer.predict(trained_model, dataloaders=val_loader)
     val_preds, val_targets = aggregate_predictions(val_out)
@@ -271,7 +271,7 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
         test_data_loader_args['shuffle'] = False
         test_loader = torch.utils.data.DataLoader(test_dataset, **test_data_loader_args)
 
-        trained_model = load_model_from_checkpoint(checkpoint_path=model_path)
+        trained_model = load_model_from_checkpoint(checkpoint_path=model_path, metrics=trainer_args['metrics'].clone())
         trainer = Trainer()
 
         test_out = {}

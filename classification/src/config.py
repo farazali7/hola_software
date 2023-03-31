@@ -37,7 +37,50 @@ cfg = {
             #  In original indexing (GM to NP): top: (6->7) (7->1) (8->2), bot: (2->4) (4->6)
             'ELECTRODE_IDS': [[1, 9], [3, 11], [6, 14], [7, 15], [5, 13]],
             'SAMPLING_FREQ': 2048
-        }
+        },
+        'NINAPRO_DB2': {
+            'RAW_DATA_PATH': 'data/raw/ninapro_db2',
+            'FORMATTED_DATA_PATH': 'data/formatted/iter9/ninapro_db2',
+            'PROCESSED_DATA_PATH': 'data/processed/iter11/ninapro_db2',
+            'HEALTHY_SUBJECTS': [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 27, 28,
+                                 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
+            'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            'GRASP_LABELS': [5, 5, 17],  # 5 = hand open (exB), 5 = medium wrap (TVG)(exC), 17 = lateral grasp (pinch)
+            'SAMPLING_FREQ': 2000,
+            'REGRASP_IDS': {
+                'OH': 0,
+                'TVG': 1,
+                'LP': 2
+            }
+        },
+        'NINAPRO_DB5': {
+            'RAW_DATA_PATH': 'data/raw/ninapro_db5',
+            'FORMATTED_DATA_PATH': 'data/formatted/iter9/ninapro_db5',
+            'PROCESSED_DATA_PATH': 'data/processed/iter11/ninapro_db5',
+            'HEALTHY_SUBJECTS': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            'GRASP_LABELS': [5, 5, 17],  # 5 = hand open (exB), 5 = medium wrap (TVG)(exC), 17 = lateral grasp (pinch)
+            'SAMPLING_FREQ': 200,
+            'REGRASP_IDS': {
+                'OH': 0,
+                'TVG': 1,
+                'LP': 2
+            }
+        },
+        'NINAPRO_DB7': {
+            'RAW_DATA_PATH': 'data/raw/ninapro_db7',
+            'FORMATTED_DATA_PATH': 'data/formatted/iter9/ninapro_db7',
+            'PROCESSED_DATA_PATH': 'data/processed/iter11/ninapro_db7',
+            'HEALTHY_SUBJECTS': [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20],
+            'ELECTRODE_IDS': [2, 4, 0, 6, 7],  # Electrodes 2, 4 are near bot and 0, 6, 7 are near top, zero-indexed
+            'GRASP_LABELS': [5, 5, 17],  # 5 = hand open (exB), 5 = medium wrap (TVG)(exC), 17 = lateral grasp (pinch)
+            'SAMPLING_FREQ': 2000,
+            'REGRASP_IDS': {
+                'OH': 0,
+                'TVG': 1,
+                'LP': 2
+            }
+        },
     },
     'SAVE_MODEL_PATH': 'results/models',
     'SAVE_SPLITS_PATH': 'results/models',
@@ -56,12 +99,12 @@ cfg = {
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
     'FEATURE_EXTRACTION_FUNC': 'feature_set_6',
 
-    'MODEL_ARCHITECTURE': 'CNN_ITER4',
+    'MODEL_ARCHITECTURE': 'CNN',
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
     'BATCH_SIZE': 256,
-    'EPOCHS': 40,
+    'EPOCHS': 1,
     'LR': 0.001,
     'SHUFFLE': True,
     'NUM_WORKERS': os.cpu_count(),

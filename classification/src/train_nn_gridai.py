@@ -24,26 +24,49 @@ def perform_experiment(args):
     wandb_entity = cfg['WANDB']['ENTITY']
     wandb_project = cfg['WANDB']['PROJECT']
 
-    # Ninapro DB10 data
-    np_cfg = cfg['DATASETS']['NINAPRO_DB10']
-    np_processed_data_path = os.path.join(args.data_dir, 'ninapro_db10')
-    print(np_processed_data_path)
-    np_healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
-    np_healthy_subjects = convert_to_full_paths(np_healthy_subjects, np_processed_data_path)
-    np_affected_subjects = np_cfg['AFFECTED_SUBJECTS']
-    np_affected_subjects = convert_to_full_paths(np_affected_subjects, np_processed_data_path)
+    # # Ninapro DB10 data
+    # np_cfg = cfg['DATASETS']['NINAPRO_DB10']
+    # np_processed_data_path = os.path.join(args.data_dir, 'ninapro_db10')
+    # print(np_processed_data_path)
+    # np_healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
+    # np_healthy_subjects = convert_to_full_paths(np_healthy_subjects, np_processed_data_path)
+    # np_affected_subjects = np_cfg['AFFECTED_SUBJECTS']
+    # np_affected_subjects = convert_to_full_paths(np_affected_subjects, np_processed_data_path)
+    #
+    # # GrabMyo data
+    # gm_cfg = cfg['DATASETS']['GRABMYO']
+    # gm_processed_data_path = os.path.join(args.data_dir, 'grabmyo_openhand')
+    # gm_healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
+    # gm_healthy_subjects = ['S' + str(x + 115) for x in gm_healthy_subjects]
+    # gm_healthy_subjects = convert_to_full_paths(gm_healthy_subjects, gm_processed_data_path)
+    #
+    # # data_sources = [np_healthy_subjects, np_affected_subjects, gm_healthy_subjects]
+    # data_sources = [np_healthy_subjects, gm_healthy_subjects]
+    # # data_sources = [gm_healthy_subjects]
+    # # data_sources = [np_healthy_subjects]
 
-    # GrabMyo data
-    gm_cfg = cfg['DATASETS']['GRABMYO']
-    gm_processed_data_path = os.path.join(args.data_dir, 'grabmyo_openhand')
-    gm_healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
-    gm_healthy_subjects = ['S' + str(x + 115) for x in gm_healthy_subjects]
-    gm_healthy_subjects = convert_to_full_paths(gm_healthy_subjects, gm_processed_data_path)
+    # Ninapro DB2 data
+    np2_cfg = cfg['DATASETS']['NINAPRO_DB2']
+    np2_processed_data_path = os.path.join(args.data_dir, 'ninapro_db2')
+    np2_healthy_subjects = np2_cfg['HEALTHY_SUBJECTS']
+    np2_healthy_subjects = ['np2_' + str(s) for s in np2_healthy_subjects]
+    np2_healthy_subjects = convert_to_full_paths(np2_healthy_subjects, np2_processed_data_path)
 
-    # data_sources = [np_healthy_subjects, np_affected_subjects, gm_healthy_subjects]
-    data_sources = [np_healthy_subjects, gm_healthy_subjects]
-    # data_sources = [gm_healthy_subjects]
-    # data_sources = [np_healthy_subjects]
+    # Ninapro DB5 data
+    np5_cfg = cfg['DATASETS']['NINAPRO_DB5']
+    np5_processed_data_path = os.path.join(args.data_dir, 'ninapro_db5')
+    np5_healthy_subjects = np5_cfg['HEALTHY_SUBJECTS']
+    np5_healthy_subjects = ['np5_' + str(s) for s in np5_healthy_subjects]
+    np5_healthy_subjects = convert_to_full_paths(np5_healthy_subjects, np5_processed_data_path)
+
+    # Ninapro DB7 data
+    np7_cfg = cfg['DATASETS']['NINAPRO_DB7']
+    np7_processed_data_path = os.path.join(args.data_dir, 'ninapro_db7')
+    np7_healthy_subjects = np7_cfg['HEALTHY_SUBJECTS']
+    np7_healthy_subjects = ['np7_' + str(s) for s in np7_healthy_subjects]
+    np7_healthy_subjects = convert_to_full_paths(np7_healthy_subjects, np7_processed_data_path)
+
+    data_sources = [np2_healthy_subjects, np5_healthy_subjects, np7_healthy_subjects]
 
     # DATALOADER ARGS #
     batch_size = cfg['BATCH_SIZE']
