@@ -115,7 +115,7 @@ cfg = {
 
     'CLASSES': ['OH', 'TVG', 'LP'],  # In label order
 
-    'BATCH_SPECIFIC_TRAIN': False,  # If train batches should be specific to 1 subject at a time (ex. for AdaBN scheme)
+    'BATCH_SPECIFIC_TRAIN': True,  # If train batches should be specific to 1 subject at a time (ex. for AdaBN scheme)
 
     'GLOBAL_SEED': 7,
 
