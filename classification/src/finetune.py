@@ -155,7 +155,7 @@ def finetune(subject, res_df, base_save_dir):
 
     # Load best model
     best_model_ckpt = trainer.checkpoint_callback.best_model_path
-    finetuned_model = load_model_from_checkpoint(best_model_ckpt)
+    finetuned_model = load_model_from_checkpoint(best_model_ckpt, metrics=trainer_args['metrics'].clone())
 
     # Setup test dataloader
     test_data = torch.Tensor(test_data)
