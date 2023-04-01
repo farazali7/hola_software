@@ -66,7 +66,8 @@ def perform_experiment(args):
     np7_healthy_subjects = ['np7_' + str(s) for s in np7_healthy_subjects]
     np7_healthy_subjects = convert_to_full_paths(np7_healthy_subjects, np7_processed_data_path)
 
-    data_sources = [np2_healthy_subjects, np5_healthy_subjects, np7_healthy_subjects]
+    # data_sources = [np2_healthy_subjects, np5_healthy_subjects, np7_healthy_subjects]
+    data_sources = [np2_healthy_subjects]
 
     # DATALOADER ARGS #
     batch_size = cfg['BATCH_SIZE']
