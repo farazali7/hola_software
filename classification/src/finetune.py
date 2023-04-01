@@ -115,7 +115,7 @@ def split_data_by_reps(data, labels, num_reps, hard_lim=7):
 
 
 def finetune(subject, res_df, base_save_dir):
-    seg_data, seg_labels = segregate_data_by_reps([subject])
+    seg_data, seg_labels = segregate_data_by_reps(subject)
 
     num_reps = finetune_params['REPS']
     train_data, train_labels, test_data, test_labels = split_data_by_reps(seg_data, seg_labels, num_reps)
@@ -241,8 +241,8 @@ if __name__ == '__main__':
 
     base_save_dir = os.path.join(cfg['SAVE_MODEL_PATH'], "finetune-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-    # pairs = [z for z in zip(test_set_subjects[::2], test_set_subjects[1::2])]
-    for i, subject in enumerate(test_set_subjects):
+    pairs = [z for z in zip(test_set_subjects[::2], test_set_subjects[1::2])]
+    for i, subject in enumerate(pairs):
         print(i)
         res_df = finetune(subject, res_df, base_save_dir=base_save_dir)
 
