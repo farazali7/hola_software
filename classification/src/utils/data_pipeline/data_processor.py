@@ -122,144 +122,142 @@ if __name__ == '__main__':
                                'standardize': standardize,
                                'sampling_freq': target_freq}
 
-    # # NINAPRO DB10
-    # np_cfg = cfg['DATASETS']['NINAPRO_DB10']
-    # formatted_data_path = np_cfg['FORMATTED_DATA_PATH']
-    # healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
-    # affected_subjects = np_cfg['AFFECTED_SUBJECTS']
-    # subject_ids = healthy_subjects + affected_subjects
-    # save_dir = np_cfg['PROCESSED_DATA_PATH']
-    # np_sampling_freq = np_cfg['SAMPLING_FREQ']
-    #
-    # if not os.path.exists(save_dir):
-    #     os.makedirs(save_dir)
-    #
-    # preprocessing_args = {'butter_ord': butter_ord,
-    #                       'butter_freq': butter_freq,
-    #                       'notch_freq': notch_freq,
-    #                       'qf': qf,
-    #                       'sampling_freq': np_sampling_freq,
-    #                       'target_freq': target_freq,
-    #                       'from_np': True}
-    #
-    # feature_extraction_args = {'window_size': window_size,
-    #                            'window_overlap_size': window_overlap_size,
-    #                            'combine_channels': combine_channels,
-    #                            'standardize': standardize,
-    #                            'sampling_freq': target_freq}
-    #
-    # with Pool() as pool:
-    #     res = list(tqdm(pool.imap(partial(process_data,
-    #                                       data_dir=formatted_data_path,
-    #                                       preprocessing_args=preprocessing_args,
-    #                                       feature_extraction_func=feature_extraction_func,
-    #                                       feature_extraction_args=feature_extraction_args,
-    #                                       save_dir=save_dir), subject_ids),
-    #                     total=len(subject_ids)))
-    #
-    # print('Done.')
+    # NINAPRO DB10
+    np_cfg = cfg['DATASETS']['NINAPRO_DB10']
+    formatted_data_path = np_cfg['FORMATTED_DATA_PATH']
+    healthy_subjects = np_cfg['HEALTHY_SUBJECTS']
+    affected_subjects = np_cfg['AFFECTED_SUBJECTS']
+    subject_ids = healthy_subjects + affected_subjects
+    save_dir = np_cfg['PROCESSED_DATA_PATH']
+    np_sampling_freq = np_cfg['SAMPLING_FREQ']
 
-    # # GrabMyo
-    # gm_cfg = cfg['DATASETS']['GRABMYO']
-    # formatted_data_path = gm_cfg['FORMATTED_DATA_PATH']
-    # healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
-    # subject_ids = ['S' + str(x + 115) for x in healthy_subjects]
-    # save_dir = gm_cfg['PROCESSED_DATA_PATH']
-    # gm_sampling_freq = gm_cfg['SAMPLING_FREQ']
-    #
-    # if not os.path.exists(save_dir):
-    #     os.makedirs(save_dir)
-    #
-    # preprocessing_args = {'butter_ord': butter_ord,
-    #                       'butter_freq': butter_freq,
-    #                       'notch_freq': notch_freq,
-    #                       'qf': qf,
-    #                       'sampling_freq': gm_sampling_freq,
-    #                       'target_freq': target_freq,
-    #                       'from_np': False}
-    #
-    # with Pool() as pool:
-    #     res = list(tqdm(pool.imap(partial(process_data,
-    #                                       data_dir=formatted_data_path,
-    #                                       preprocessing_args=preprocessing_args,
-    #                                       feature_extraction_func=feature_extraction_func,
-    #                                       feature_extraction_args=feature_extraction_args,
-    #                                       save_dir=save_dir), subject_ids),
-    #                     total=len(subject_ids)))
-    #
-    # print('Done.')
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    preprocessing_args = {'butter_ord': butter_ord,
+                          'butter_freq': butter_freq,
+                          'notch_freq': notch_freq,
+                          'qf': qf,
+                          'sampling_freq': np_sampling_freq,
+                          'target_freq': target_freq}
+
+    feature_extraction_args = {'window_size': window_size,
+                               'window_overlap_size': window_overlap_size,
+                               'combine_channels': combine_channels,
+                               'standardize': standardize,
+                               'sampling_freq': target_freq}
+
+    with Pool() as pool:
+        res = list(tqdm(pool.imap(partial(process_data,
+                                          data_dir=formatted_data_path,
+                                          preprocessing_args=preprocessing_args,
+                                          feature_extraction_func=feature_extraction_func,
+                                          feature_extraction_args=feature_extraction_args,
+                                          save_dir=save_dir), subject_ids),
+                        total=len(subject_ids)))
+
+    print('Done.')
+
+    # GrabMyo
+    gm_cfg = cfg['DATASETS']['GRABMYO']
+    formatted_data_path = gm_cfg['FORMATTED_DATA_PATH']
+    healthy_subjects = gm_cfg['HEALTHY_SUBJECTS']
+    subject_ids = ['S' + str(x + 115) for x in healthy_subjects]
+    save_dir = gm_cfg['PROCESSED_DATA_PATH']
+    gm_sampling_freq = gm_cfg['SAMPLING_FREQ']
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    preprocessing_args = {'butter_ord': butter_ord,
+                          'butter_freq': butter_freq,
+                          'notch_freq': notch_freq,
+                          'qf': qf,
+                          'sampling_freq': gm_sampling_freq,
+                          'target_freq': target_freq}
+
+    with Pool() as pool:
+        res = list(tqdm(pool.imap(partial(process_data,
+                                          data_dir=formatted_data_path,
+                                          preprocessing_args=preprocessing_args,
+                                          feature_extraction_func=feature_extraction_func,
+                                          feature_extraction_args=feature_extraction_args,
+                                          save_dir=save_dir), subject_ids),
+                        total=len(subject_ids)))
+
+    print('Done.')
 
     # NINAPRO DB2
-    np2_cfg = cfg['DATASETS']['NINAPRO_DB2']
-    formatted_data_path = np2_cfg['FORMATTED_DATA_PATH']
-    healthy_subjects = np2_cfg['HEALTHY_SUBJECTS']
-    subject_ids = healthy_subjects
-    subject_ids = ['np2_'+str(s) for s in subject_ids]
-    save_dir = np2_cfg['PROCESSED_DATA_PATH']
-    np2_sampling_freq = np2_cfg['SAMPLING_FREQ']
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    preprocessing_args['sampling_freq'] = np2_sampling_freq
-
-    with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(process_data,
-                                          data_dir=formatted_data_path,
-                                          preprocessing_args=preprocessing_args,
-                                          feature_extraction_func=feature_extraction_func,
-                                          feature_extraction_args=feature_extraction_args,
-                                          save_dir=save_dir), subject_ids),
-                        total=len(subject_ids)))
-
-    print('Done.')
-
-    # NINAPRO DB5
-    np5_cfg = cfg['DATASETS']['NINAPRO_DB5']
-    formatted_data_path = np5_cfg['FORMATTED_DATA_PATH']
-    healthy_subjects = np5_cfg['HEALTHY_SUBJECTS']
-    subject_ids = healthy_subjects
-    subject_ids = ['np5_'+str(s) for s in subject_ids]
-    save_dir = np5_cfg['PROCESSED_DATA_PATH']
-    np5_sampling_freq = np5_cfg['SAMPLING_FREQ']
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    preprocessing_args['sampling_freq'] = np5_sampling_freq
-
-    with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(process_data,
-                                          data_dir=formatted_data_path,
-                                          preprocessing_args=preprocessing_args,
-                                          feature_extraction_func=feature_extraction_func,
-                                          feature_extraction_args=feature_extraction_args,
-                                          save_dir=save_dir), subject_ids),
-                        total=len(subject_ids)))
-
-    print('Done.')
-
-    # NINAPRO DB7
-    np7_cfg = cfg['DATASETS']['NINAPRO_DB7']
-    formatted_data_path = np7_cfg['FORMATTED_DATA_PATH']
-    healthy_subjects = np7_cfg['HEALTHY_SUBJECTS']
-    subject_ids = healthy_subjects
-    subject_ids = ['np7_' + str(s) for s in subject_ids]
-    save_dir = np7_cfg['PROCESSED_DATA_PATH']
-    np7_sampling_freq = np7_cfg['SAMPLING_FREQ']
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    preprocessing_args['sampling_freq'] = np7_sampling_freq
-
-    with Pool() as pool:
-        res = list(tqdm(pool.imap(partial(process_data,
-                                          data_dir=formatted_data_path,
-                                          preprocessing_args=preprocessing_args,
-                                          feature_extraction_func=feature_extraction_func,
-                                          feature_extraction_args=feature_extraction_args,
-                                          save_dir=save_dir), subject_ids),
-                        total=len(subject_ids)))
-
-    print('Done.')
+    # np2_cfg = cfg['DATASETS']['NINAPRO_DB2']
+    # formatted_data_path = np2_cfg['FORMATTED_DATA_PATH']
+    # healthy_subjects = np2_cfg['HEALTHY_SUBJECTS']
+    # subject_ids = healthy_subjects
+    # subject_ids = ['np2_'+str(s) for s in subject_ids]
+    # save_dir = np2_cfg['PROCESSED_DATA_PATH']
+    # np2_sampling_freq = np2_cfg['SAMPLING_FREQ']
+    #
+    # if not os.path.exists(save_dir):
+    #     os.makedirs(save_dir)
+    #
+    # preprocessing_args['sampling_freq'] = np2_sampling_freq
+    #
+    # with Pool() as pool:
+    #     res = list(tqdm(pool.imap(partial(process_data,
+    #                                       data_dir=formatted_data_path,
+    #                                       preprocessing_args=preprocessing_args,
+    #                                       feature_extraction_func=feature_extraction_func,
+    #                                       feature_extraction_args=feature_extraction_args,
+    #                                       save_dir=save_dir), subject_ids),
+    #                     total=len(subject_ids)))
+    #
+    # print('Done.')
+    #
+    # # NINAPRO DB5
+    # np5_cfg = cfg['DATASETS']['NINAPRO_DB5']
+    # formatted_data_path = np5_cfg['FORMATTED_DATA_PATH']
+    # healthy_subjects = np5_cfg['HEALTHY_SUBJECTS']
+    # subject_ids = healthy_subjects
+    # subject_ids = ['np5_'+str(s) for s in subject_ids]
+    # save_dir = np5_cfg['PROCESSED_DATA_PATH']
+    # np5_sampling_freq = np5_cfg['SAMPLING_FREQ']
+    #
+    # if not os.path.exists(save_dir):
+    #     os.makedirs(save_dir)
+    #
+    # preprocessing_args['sampling_freq'] = np5_sampling_freq
+    #
+    # with Pool() as pool:
+    #     res = list(tqdm(pool.imap(partial(process_data,
+    #                                       data_dir=formatted_data_path,
+    #                                       preprocessing_args=preprocessing_args,
+    #                                       feature_extraction_func=feature_extraction_func,
+    #                                       feature_extraction_args=feature_extraction_args,
+    #                                       save_dir=save_dir), subject_ids),
+    #                     total=len(subject_ids)))
+    #
+    # print('Done.')
+    #
+    # # NINAPRO DB7
+    # np7_cfg = cfg['DATASETS']['NINAPRO_DB7']
+    # formatted_data_path = np7_cfg['FORMATTED_DATA_PATH']
+    # healthy_subjects = np7_cfg['HEALTHY_SUBJECTS']
+    # subject_ids = healthy_subjects
+    # subject_ids = ['np7_' + str(s) for s in subject_ids]
+    # save_dir = np7_cfg['PROCESSED_DATA_PATH']
+    # np7_sampling_freq = np7_cfg['SAMPLING_FREQ']
+    #
+    # if not os.path.exists(save_dir):
+    #     os.makedirs(save_dir)
+    #
+    # preprocessing_args['sampling_freq'] = np7_sampling_freq
+    #
+    # with Pool() as pool:
+    #     res = list(tqdm(pool.imap(partial(process_data,
+    #                                       data_dir=formatted_data_path,
+    #                                       preprocessing_args=preprocessing_args,
+    #                                       feature_extraction_func=feature_extraction_func,
+    #                                       feature_extraction_args=feature_extraction_args,
+    #                                       save_dir=save_dir), subject_ids),
+    #                     total=len(subject_ids)))
+    #
+    # print('Done.')

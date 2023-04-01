@@ -182,7 +182,7 @@ def feature_set_5(data, labels, args):
     # Apply hamming window and get spectogram
     window = 'hamming'
     f, t, Sxx = spectogram(data=emg_windows, sampling_freq=sampling_freq, window=window, nperseg=20,
-                           n_overlap=10, axis=1)
+                           n_overlap=12, axis=1)
 
     Sxx = np.transpose(Sxx, (0, 3, 1, 2))
 

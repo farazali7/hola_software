@@ -5,7 +5,7 @@ cfg = {
         'NINAPRO_DB10': {
             'RAW_DATA_PATH': 'data/raw/ninapro_db10',
             'FORMATTED_DATA_PATH': 'data/formatted/iter8/ninapro_db10',
-            'PROCESSED_DATA_PATH': 'data/processed/iter10/ninapro_db10',
+            'PROCESSED_DATA_PATH': 'data/processed/iter13/ninapro_db10',
             'DATA_COL_NAME': 'emg',
             'LABEL_COL_NAME': 'regrasp',
             'HEALTHY_SUBJECTS': ['S010', 'S011', 'S012', 'S013', 'S014', 'S015', 'S016', 'S017', 'S018', 'S019', 'S020',
@@ -23,7 +23,7 @@ cfg = {
         'GRABMYO': {
             'RAW_DATA_PATH': 'data/raw/grabmyo/open_hand',
             'FORMATTED_DATA_PATH': 'data/formatted/iter8/grabmyo_openhand',
-            'PROCESSED_DATA_PATH': 'data/processed/iter10/grabmyo_openhand',
+            'PROCESSED_DATA_PATH': 'data/processed/iter13/grabmyo_openhand',
             'HEALTHY_SUBJECTS': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
                                  21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                  40, 41, 42, 43],
@@ -96,8 +96,8 @@ cfg = {
     'TARGET_FREQ': 200,  # Frequency expected in real-time acquisition
 
     # Feature extraction args
-    'WINDOW_SIZE': 52,
-    'WINDOW_OVERLAP_SIZE': 26,
+    'WINDOW_SIZE': 38,
+    'WINDOW_OVERLAP_SIZE': 29,
     'COMBINE_CHANNELS': False,
     'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
     'FEATURE_EXTRACTION_FUNC': 'feature_set_6',
