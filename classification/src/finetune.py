@@ -23,9 +23,29 @@ def adjust_subject_paths(subjects):
     gm_healthy_subjects = cfg['DATASETS']['GRABMYO']['HEALTHY_SUBJECTS']
     gm_process_path = cfg['DATASETS']['GRABMYO']['PROCESSED_DATA_PATH']
 
+    np2_healthy_subjects = ['np2_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB2']['HEALTHY_SUBJECTS']]
+    np2_process_path = cfg['DATASETS']['NINAPRO_DB2']['PROCESSED_DATA_PATH']
+
+    np5_healthy_subjects = ['np5_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB5']['HEALTHY_SUBJECTS']]
+    np5_process_path = cfg['DATASETS']['NINAPRO_DB5']['PROCESSED_DATA_PATH']
+
+    np7_healthy_subjects = ['np7_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB7']['HEALTHY_SUBJECTS']]
+    np7_process_path = cfg['DATASETS']['NINAPRO_DB7']['PROCESSED_DATA_PATH']
+
     test_set_subjects = []
     for id in subject_ids:
-        base_path = np_process_path if id in np_healthy_subjects else gm_process_path
+        if id in np_healthy_subjects:
+            base_path = np_process_path
+        elif id in gm_healthy_subjects:
+            base_path = gm_process_path
+        elif id in np2_healthy_subjects:
+            base_path = np2_process_path
+        elif id in np5_healthy_subjects:
+            base_path = np5_process_path
+        elif id in np7_healthy_subjects:
+            base_path = np7_process_path
+        else:
+            raise Exception(f'id: {id} not in any datasets.')
         path = convert_to_full_paths([id], base_path)
         test_set_subjects += path
 
@@ -119,12 +139,19 @@ def finetune(subject, res_df, base_save_dir):
     class_weights = torch.Tensor([0.6, 0.9, 0.9]).to(device)
     trainer_args['class_weights'] = class_weights
 
-    trained_model = load_model_from_checkpoint(checkpoint_path=finetune_params['CHECKPOINT_PATH'],
-                                               metrics=trainer_args['metrics'].clone(), class_weights=class_weights)
+    model_pth = torch.load(finetune_params['CHECKPOINT_PATH'], map_location='cpu')
+    trainer_args['prev_optimizer_state'] = model_pth['optimizer_states'][0]
+
+    model = get_model(model_name=cfg['MODEL_ARCHITECTURE'], model_args=model_args, trainer_args=trainer_args,
+                      use_legacy=False)
+    model.load_state_dict(model_pth['state_dict'])
+
+    # trained_model = load_model_from_checkpoint(checkpoint_path=finetune_params['CHECKPOINT_PATH'],
+    #                                            metrics=trainer_args['metrics'].clone(), class_weights=class_weights)
     trainer = Trainer(callbacks=callbacks, max_epochs=finetune_params['EPOCHS'], deterministic=True, logger=False)
 
     # Fine-tune
-    trainer.fit(model=trained_model, train_dataloaders=train_loader)
+    trainer.fit(model=model, train_dataloaders=train_loader)
 
     # Load best model
     best_model_ckpt = trainer.checkpoint_callback.best_model_path
