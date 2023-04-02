@@ -245,6 +245,8 @@ cfg = {
                 'auto_insert_metric_name': True
             }
         },
-        'REDUCE_LR': True
+        'REDUCE_LR': True,
+        'PERFORM_MAJORITY_VOTING': True,
+        'VOTERS': 3
     },
 }

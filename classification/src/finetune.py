@@ -9,7 +9,8 @@ from torchmetrics import MetricCollection, Precision, Recall, F1Score
 from classification.src.config import cfg
 from classification.src.utils.data_pipeline import convert_to_full_paths, load_and_concat
 from classification.src.models.models import load_model_from_checkpoint, get_model
-from classification.src.utils.experimentation import define_callbacks, aggregate_predictions, compute_class_weights
+from classification.src.utils.experimentation import define_callbacks, aggregate_predictions, compute_class_weights, \
+    majority_vote_transform
 
 import pandas as pd
 
@@ -114,7 +115,7 @@ def split_data_by_reps(data, labels, num_reps, hard_lim=7):
     return train_data, train_labels, test_data, test_labels
 
 
-def finetune(subject, res_df, base_save_dir, reduce_lr=False):
+def finetune(subject, res_df, base_save_dir, reduce_lr=False, evaluate_by_mv=False, voters=None):
     seg_data, seg_labels = segregate_data_by_reps(subject)
 
     num_reps = finetune_params['REPS']
@@ -173,7 +174,12 @@ def finetune(subject, res_df, base_save_dir, reduce_lr=False):
     test_out = trainer.predict(finetuned_model, dataloaders=test_loader)
     test_preds, test_targets = aggregate_predictions(test_out)
     metrics_def = metrics.clone()
-    test_metrics = metrics_def(test_preds, test_targets)
+    if evaluate_by_mv:
+        assert voters is not None, "Param: 'voters' must be set to an integer if evaluating by majority vote."
+        mv_preds, mv_targets = majority_vote_transform(test_preds, test_targets, voters=voters, drop_last=True)
+        test_metrics = metrics_def(mv_preds, mv_targets)
+    else:
+        test_metrics = metrics_def(test_preds, test_targets)
 
     f1_scores = test_metrics['Multiclass F1-Score'].detach().numpy()
     precision_scores = test_metrics['Multiclass Precision'].detach().numpy()
@@ -247,7 +253,8 @@ if __name__ == '__main__':
     pairs = [z for z in zip(test_set_subjects[::2], test_set_subjects[1::2])]
     for i, subject in enumerate(pairs):
         print(i)
-        res_df = finetune(subject, res_df, base_save_dir=base_save_dir, reduce_lr=finetune_params['REDUCE_LR'])
+        res_df = finetune(subject, res_df, base_save_dir=base_save_dir, reduce_lr=finetune_params['REDUCE_LR'],
+                          evaluate_by_mv=finetune_params['PERFORM_MAJORITY_VOTING'], voters=finetune_params['VOTERS'])
 
     res_df.to_csv(os.path.join(base_save_dir, 'full_test_metrics.csv'))
 

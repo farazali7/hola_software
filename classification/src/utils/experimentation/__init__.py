@@ -4,3 +4,4 @@ from .flatten import flatten_dict
 from .aggregation import aggregate_predictions
 from .data_samplers import *
 from .train_loops import *
+from .evaluation import majority_vote_transform
