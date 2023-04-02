@@ -1,4 +1,5 @@
 from statistics import mode
+import torch
 
 
 def majority_vote_transform(preds, targets, voters, drop_last=False):
@@ -19,6 +20,8 @@ def majority_vote_transform(preds, targets, voters, drop_last=False):
             grouped_targets = grouped_targets[:-1]
 
     mode_preds = [mode(pred) for pred in grouped_preds]
+    mode_preds = torch.tensor(mode_preds, dtype=torch.int64)
     mode_targets = [mode(target) for target in grouped_targets]
+    mode_targets = torch.tensor(mode_targets, dtype=torch.int64)
 
     return mode_preds, mode_targets
