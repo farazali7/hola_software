@@ -20,7 +20,7 @@ def adjust_subject_paths(subjects):
     np_healthy_subjects = cfg['DATASETS']['NINAPRO_DB10']['HEALTHY_SUBJECTS']
     np_process_path = cfg['DATASETS']['NINAPRO_DB10']['PROCESSED_DATA_PATH']
 
-    gm_healthy_subjects = cfg['DATASETS']['GRABMYO']['HEALTHY_SUBJECTS']
+    gm_healthy_subjects = ['S' + str(x + 115) for x in cfg['DATASETS']['GRABMYO']['HEALTHY_SUBJECTS']]
     gm_process_path = cfg['DATASETS']['GRABMYO']['PROCESSED_DATA_PATH']
 
     np2_healthy_subjects = ['np2_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB2']['HEALTHY_SUBJECTS']]
@@ -114,7 +114,7 @@ def split_data_by_reps(data, labels, num_reps, hard_lim=7):
     return train_data, train_labels, test_data, test_labels
 
 
-def finetune(subject, res_df, base_save_dir):
+def finetune(subject, res_df, base_save_dir, reduce_lr=False):
     seg_data, seg_labels = segregate_data_by_reps(subject)
 
     num_reps = finetune_params['REPS']
@@ -140,7 +140,10 @@ def finetune(subject, res_df, base_save_dir):
     trainer_args['class_weights'] = class_weights
 
     model_pth = torch.load(finetune_params['CHECKPOINT_PATH'], map_location='cpu')
-    trainer_args['prev_optimizer_state'] = model_pth['optimizer_states'][0]
+    trainer_args['prev_optimizer_state'] = deepcopy(model_pth['optimizer_states'][0])
+
+    if reduce_lr:  # Reduce pretraining LR by factor of 10 for fine-tuning
+        trainer_args['prev_optimizer_state']['param_groups'][0]['lr'] /= 10
 
     model = get_model(model_name=cfg['MODEL_ARCHITECTURE'], model_args=model_args, trainer_args=trainer_args,
                       use_legacy=False)
@@ -244,7 +247,7 @@ if __name__ == '__main__':
     pairs = [z for z in zip(test_set_subjects[::2], test_set_subjects[1::2])]
     for i, subject in enumerate(pairs):
         print(i)
-        res_df = finetune(subject, res_df, base_save_dir=base_save_dir)
+        res_df = finetune(subject, res_df, base_save_dir=base_save_dir, reduce_lr=finetune_params['REDUCE_LR'])
 
     res_df.to_csv(os.path.join(base_save_dir, 'full_test_metrics.csv'))
 

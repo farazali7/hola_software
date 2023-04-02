@@ -244,6 +244,7 @@ cfg = {
                 'mode': 'min',
                 'auto_insert_metric_name': True
             }
-        }
+        },
+        'REDUCE_LR': True
     },
 }
