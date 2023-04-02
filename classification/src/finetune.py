@@ -240,6 +240,14 @@ if __name__ == '__main__':
     test_set_subjects_path = finetune_params['TEST_SET_SUBJECTS_PATH']
     test_set_subjects = torch.load(test_set_subjects_path)
 
+    if finetune_params['ON_AMPUTEES']:
+        amputee_ids = ['S101', 'S102', 'S103', 'S104', 'S105', 'S106', 'S107']
+        for i in range(len(test_set_subjects)):
+            if 'ninapro_db10' in test_set_subjects[i] and len(amputee_ids) > 0:
+                curr_subject = test_set_subjects[i].split('/')[-1]
+                amputee = test_set_subjects[i].split(curr_subject)[0] + amputee_ids.pop()
+                test_set_subjects[i] = amputee
+
     if finetune_params['RUN_LOCALLY']:  # Adjust paths
         test_set_subjects = adjust_subject_paths(test_set_subjects)
 
