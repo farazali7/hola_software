@@ -228,7 +228,7 @@ if __name__ == '__main__':
     model_args = {'dropout': 0}
 
     # Load test set subjects nums
-    test_set_subjects_path = 'results/gridai/test_set.pkl'
+    test_set_subjects_path = finetune_params['TEST_SET_SUBJECTS_PATH']
     test_set_subjects = torch.load(test_set_subjects_path)
 
     if finetune_params['RUN_LOCALLY']:  # Adjust paths

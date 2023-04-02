@@ -228,8 +228,8 @@ cfg = {
     'FINETUNE': {
         'RUN_LOCALLY': False,
         'REPS': 4,
-        'CHECKPOINT_PATH': 'results/gridai/model.pth',  # Pre-trained model
-        # 'CHECKPOINT_PATH': 'results/gridai/epoch=34--val_Macro F1-Score=0.00--fold=5.ckpt',  # Pre-trained model
+        'TEST_SET_SUBJECTS_PATH': 'results/models/20230401-200055/test_set.pkl',
+        'CHECKPOINT_PATH': 'results/models/20230401-200055/epoch=21--val_Macro F1-Score=0.00--fold=1-v1.ckpt',  # Pre-trained model
         'EPOCHS': 20,
         'BATCH_SIZE': 32,
         'CALLBACKS': {
