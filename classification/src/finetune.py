@@ -137,7 +137,7 @@ def finetune(subject, res_df, base_save_dir, reduce_lr=False, evaluate_by_mv=Fal
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # class_weights = compute_class_weights(train_labels).to(device)
-    class_weights = torch.Tensor([0.6, 0.9, 1.1]).to(device)
+    class_weights = torch.Tensor([0.6, 0.9, 0.9]).to(device)
     trainer_args['class_weights'] = class_weights
 
     model_pth = torch.load(finetune_params['CHECKPOINT_PATH'], map_location='cpu')
