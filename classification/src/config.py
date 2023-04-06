@@ -227,7 +227,7 @@ cfg = {
     # Fine-tuning parameters such as whether to run script locally (adjust paths), how many reps to use for training
     'FINETUNE': {
         'RUN_LOCALLY': False,
-        'ON_AMPUTEES': True,
+        'ON_AMPUTEES': False,
         'REPS': 4,
         'TEST_SET_SUBJECTS_PATH': 'results/models/20230401-200055/test_set.pkl',
         'CHECKPOINT_PATH': 'results/models/20230401-200055/epoch=21--val_Macro F1-Score=0.00--fold=1-v1.ckpt',  # Pre-trained model
@@ -246,7 +246,7 @@ cfg = {
                 'auto_insert_metric_name': True
             }
         },
-        'REDUCE_LR': True,
+        'REDUCE_LR': False,
         'PERFORM_MAJORITY_VOTING': True,
         'VOTERS': 3
     },

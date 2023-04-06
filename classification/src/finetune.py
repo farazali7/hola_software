@@ -148,7 +148,7 @@ def finetune(subject, res_df, base_save_dir, reduce_lr=False, evaluate_by_mv=Fal
 
     model = get_model(model_name=cfg['MODEL_ARCHITECTURE'], model_args=model_args, trainer_args=trainer_args,
                       use_legacy=False)
-    model.load_state_dict(model_pth['state_dict'])
+    # model.load_state_dict(model_pth['state_dict'])
 
     # trained_model = load_model_from_checkpoint(checkpoint_path=finetune_params['CHECKPOINT_PATH'],
     #                                            metrics=trainer_args['metrics'].clone(), class_weights=class_weights)
