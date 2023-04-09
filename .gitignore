@@ -133,6 +133,7 @@ data/
 */results/models/
 */results/visualizations/
 */results/gridai/
+*/release_models/
 **.DS_Store
 .idea/
 wandb/

@@ -4,6 +4,8 @@ from itertools import zip_longest, cycle, islice
 import math
 import os
 import torch
+import numpy as np
+from classification.src.utils.data_pipeline import load_and_concat
 
 
 def create_equal_folds(data_sources, num_folds=5, seed=None, save_dir=None):
@@ -177,6 +179,68 @@ def round_robin_fill(data_sources, target, max_source_len, remove_from_source=Fa
         logging.warning(f'Could not fill list with {target} elements, returning list with {len(res)} elements.')
 
     return res
+
+
+def segregate_data_by_reps(subject):
+    # Load their data
+    test_x, test_y = load_and_concat(subject, ext='.pkl', include_uid=False, remove_trial_dim=False)
+
+    # Perform one iteration of fine-tuning on X reps
+    # Get training set (X reps for each grasp)
+    unique_classes = np.unique(test_y)
+
+    # For each class segregate by rep number
+    segregated_data, segregated_labels = [], []
+    for cls in unique_classes:
+        cls_idxs = np.where(test_y == cls)[0]
+        cls_samples = test_x[cls_idxs]
+
+        cls_reps = np.unique(cls_samples[..., -1])
+
+        cls_rep_data, cls_rep_labels = [], []
+        for rep_id in cls_reps:
+            # Flatten feature dims
+            cls_sampled_reshaped = cls_samples.reshape((cls_samples.shape[0], -1, cls_samples.shape[-1]))
+            rep_idxs = np.where(cls_sampled_reshaped[..., -1][:, 0] == rep_id)[0]
+
+            rep_data = cls_samples[rep_idxs]
+            rep_labels = test_y[cls_idxs][rep_idxs]
+            cls_rep_data.append(rep_data)
+            cls_rep_labels.append(rep_labels)
+
+        segregated_data.append(cls_rep_data)
+        segregated_labels.append(cls_rep_labels)
+
+    return segregated_data, segregated_labels
+
+
+def split_data_by_reps(data, labels, num_reps, hard_lim=7):
+    train_data = []
+    train_labels = []
+    test_data = []
+    test_labels = []
+    for idx in range(len(data)):
+        cls_data = data[idx]
+        cls_labels = labels[idx]
+
+        cls_train_reps = cls_data[:num_reps]
+        cls_train_labels = cls_labels[:num_reps]
+
+        cls_test_reps = cls_data[num_reps:hard_lim]
+        cls_test_labels = cls_labels[num_reps:hard_lim]
+
+        train_data += cls_train_reps
+        train_labels += cls_train_labels
+        test_data += cls_test_reps
+        test_labels += cls_test_labels
+
+    train_data = np.vstack(train_data)[..., :-1]
+    train_labels = np.vstack(train_labels)
+
+    test_data = np.vstack(test_data)[..., :-1]
+    test_labels = np.vstack(test_labels)
+
+    return train_data, train_labels, test_data, test_labels
 
 
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import os
 import datetime
@@ -7,112 +6,11 @@ from pytorch_lightning.trainer import Trainer
 from torchmetrics import MetricCollection, Precision, Recall, F1Score
 
 from classification.src.config import cfg
-from classification.src.utils.data_pipeline import convert_to_full_paths, load_and_concat
 from classification.src.models.models import load_model_from_checkpoint, get_model
 from classification.src.utils.experimentation import define_callbacks, aggregate_predictions, compute_class_weights, \
-    majority_vote_transform
+    majority_vote_transform, adjust_subject_paths, segregate_data_by_reps, split_data_by_reps
 
 import pandas as pd
-
-
-def adjust_subject_paths(subjects):
-    subject_ids = [s.split('/')[-1] for s in subjects]
-
-    np_healthy_subjects = cfg['DATASETS']['NINAPRO_DB10']['HEALTHY_SUBJECTS']
-    np_process_path = cfg['DATASETS']['NINAPRO_DB10']['PROCESSED_DATA_PATH']
-
-    gm_healthy_subjects = ['S' + str(x + 115) for x in cfg['DATASETS']['GRABMYO']['HEALTHY_SUBJECTS']]
-    gm_process_path = cfg['DATASETS']['GRABMYO']['PROCESSED_DATA_PATH']
-
-    np2_healthy_subjects = ['np2_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB2']['HEALTHY_SUBJECTS']]
-    np2_process_path = cfg['DATASETS']['NINAPRO_DB2']['PROCESSED_DATA_PATH']
-
-    np5_healthy_subjects = ['np5_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB5']['HEALTHY_SUBJECTS']]
-    np5_process_path = cfg['DATASETS']['NINAPRO_DB5']['PROCESSED_DATA_PATH']
-
-    np7_healthy_subjects = ['np7_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB7']['HEALTHY_SUBJECTS']]
-    np7_process_path = cfg['DATASETS']['NINAPRO_DB7']['PROCESSED_DATA_PATH']
-
-    test_set_subjects = []
-    for id in subject_ids:
-        if id in np_healthy_subjects:
-            base_path = np_process_path
-        elif id in gm_healthy_subjects:
-            base_path = gm_process_path
-        elif id in np2_healthy_subjects:
-            base_path = np2_process_path
-        elif id in np5_healthy_subjects:
-            base_path = np5_process_path
-        elif id in np7_healthy_subjects:
-            base_path = np7_process_path
-        else:
-            raise Exception(f'id: {id} not in any datasets.')
-        path = convert_to_full_paths([id], base_path)
-        test_set_subjects += path
-
-    return test_set_subjects
-
-
-def segregate_data_by_reps(subject):
-    # Load their data
-    test_x, test_y = load_and_concat(subject, ext='.pkl', include_uid=False, remove_trial_dim=False)
-
-    # Perform one iteration of fine-tuning on X reps
-    # Get training set (X reps for each grasp)
-    unique_classes = np.unique(test_y)
-
-    # For each class segregate by rep number
-    segregated_data, segregated_labels = [], []
-    for cls in unique_classes:
-        cls_idxs = np.where(test_y == cls)[0]
-        cls_samples = test_x[cls_idxs]
-
-        cls_reps = np.unique(cls_samples[..., -1])
-
-        cls_rep_data, cls_rep_labels = [], []
-        for rep_id in cls_reps:
-            # Flatten feature dims
-            cls_sampled_reshaped = cls_samples.reshape((cls_samples.shape[0], -1, cls_samples.shape[-1]))
-            rep_idxs = np.where(cls_sampled_reshaped[..., -1][:, 0] == rep_id)[0]
-
-            rep_data = cls_samples[rep_idxs]
-            rep_labels = test_y[cls_idxs][rep_idxs]
-            cls_rep_data.append(rep_data)
-            cls_rep_labels.append(rep_labels)
-
-        segregated_data.append(cls_rep_data)
-        segregated_labels.append(cls_rep_labels)
-
-    return segregated_data, segregated_labels
-
-
-def split_data_by_reps(data, labels, num_reps, hard_lim=7):
-    train_data = []
-    train_labels = []
-    test_data = []
-    test_labels = []
-    for idx in range(len(data)):
-        cls_data = data[idx]
-        cls_labels = labels[idx]
-
-        cls_train_reps = cls_data[:num_reps]
-        cls_train_labels = cls_labels[:num_reps]
-
-        cls_test_reps = cls_data[num_reps:hard_lim]
-        cls_test_labels = cls_labels[num_reps:hard_lim]
-
-        train_data += cls_train_reps
-        train_labels += cls_train_labels
-        test_data += cls_test_reps
-        test_labels += cls_test_labels
-
-    train_data = np.vstack(train_data)[..., :-1]
-    train_labels = np.vstack(train_labels)
-
-    test_data = np.vstack(test_data)[..., :-1]
-    test_labels = np.vstack(test_labels)
-
-    return train_data, train_labels, test_data, test_labels
 
 
 def finetune(subject, res_df, base_save_dir, reduce_lr=False, evaluate_by_mv=False, voters=None):
@@ -148,7 +46,7 @@ def finetune(subject, res_df, base_save_dir, reduce_lr=False, evaluate_by_mv=Fal
 
     model = get_model(model_name=cfg['MODEL_ARCHITECTURE'], model_args=model_args, trainer_args=trainer_args,
                       use_legacy=False)
-    # model.load_state_dict(model_pth['state_dict'])
+    model.load_state_dict(model_pth['state_dict'])
 
     # trained_model = load_model_from_checkpoint(checkpoint_path=finetune_params['CHECKPOINT_PATH'],
     #                                            metrics=trainer_args['metrics'].clone(), class_weights=class_weights)
@@ -201,13 +99,6 @@ def finetune(subject, res_df, base_save_dir, reduce_lr=False, evaluate_by_mv=Fal
     print(f'Done subject: {subject}')
 
     return res_df
-
-    # min_loss = np.float('inf')
-    # for epoch in range(finetune_params['EPOCHS']):
-    #     print(f'\n---- Epoch: {epoch} ----\n')
-    #     loss = model.fit(train_loader, epoch)
-    #     if loss < min_loss:
-    #         torch.save(model.state_dict(), os.path.join(save_dir, 'best_model.pth'))
 
 
 if __name__ == '__main__':

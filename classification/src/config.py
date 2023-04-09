@@ -250,4 +250,15 @@ cfg = {
         'PERFORM_MAJORITY_VOTING': True,
         'VOTERS': 3
     },
+
+    # Params for running classical model training such as whether to run script locally (adjust paths), etc.
+    'CLASSICAL_MODEL_COMPARISON': {
+        'RUN_LOCALLY': True,
+        'ON_AMPUTEES': True,
+        'REPS': 4,
+        # 'TEST_SET_SUBJECTS_PATH': 'results/models/20230401-200055/test_set.pkl',
+        'TEST_SET_SUBJECTS_PATH': 'results/gridai/window_3/test_set.pkl',
+        'PERFORM_MAJORITY_VOTING': True,
+        'VOTERS': 3
+    }
 }
