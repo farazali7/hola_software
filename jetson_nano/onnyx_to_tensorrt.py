@@ -1,12 +1,11 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch2trt import torch2trt  # NEED TO DO THIS ON JETSON NANO ITSELF
-from classification.src.config import cfg as cls_cfg
-from jetson_nano.config import cfg as jn_cfg
-from jetson_nano.utils import convert_keys
+import torch.onnx
+
 from copy import deepcopy
-import os
+
+from jetson_nano.config import cfg as jn_cfg
+
 
 class CNN_ITER4(nn.Module):
     def __init__(self, model_cfg):
@@ -43,12 +42,12 @@ class CNN_ITER4(nn.Module):
         x = self.output_activation(x)
 
         return x
+    
 
-print(os.getcwd())
 # Load pretrained model state dict
 model_path = jn_cfg['PT_MODEL_PATH']
 model_pth = torch.load(model_path)
-
+print('LOADED PTH')
 # Params and metrics for trainer (just used for backward compatability here)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -56,15 +55,23 @@ model_args = {'dropout': 0}
 
 # Get base model architecture
 model = CNN_ITER4(model_args)
-new_dict = convert_keys(model_pth['state_dict'])
-model.load_state_dict(new_dict)
+
+new_state_dict = {}
+for key in model_pth['state_dict']:
+    new_key = key.split('model.')[1]
+    new_state_dict[new_key] = deepcopy(model_pth['state_dict'][key])
+
+model.load_state_dict(new_state_dict)
 model.eval().cuda()
-print('DONE LOADING')
+
+print('LOADED MODEL')
+
 # create example data
-x = torch.ones((1, 5, 5, 5)).cuda()
+x = torch.ones((3, 5, 5, 5)).cuda()
 
-# convert to TensorRT feeding sample data as input
-model_trt = torch2trt(model, [x])
-print('DONE CONVERTING')
-
-torch.save(model_trt.state_dict(), jn_cfg['MODEL_PATH'])
+# Export to ONNX
+torch.onnx.export(model, 
+                  x, 
+                  jn_cfg['ONNX_MODEL_PATH'], 
+                  verbose=False)
+print("DONE EXPORTING")
