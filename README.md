@@ -143,8 +143,8 @@ only labels.
 ## Deployment & Online Results
 The online performance on a healthy user was 70.1% macro F1-score.
 
-The capstone project was finished but with a lot of 
-real-time deployment efforts and tuning still left for future.
+The capstone project was finished but with some
+real-time deployment efforts and tuning still left as future work.
 Currently, the model was deployed onto a Jetson Nano microcontroller.
 This microcontroller receives EMG data from an OpenBCI Cyton Board that
 samples at 250 Hz.
